@@ -55,8 +55,8 @@ public class ClassesProcessor {
     boolean bDecompileInner = DecompilerContext.getOption(IFernflowerPreferences.DECOMPILE_INNER);
 
     // create class nodes
-    for (StructClass cl : context.getClasses().values()) {
-      if (cl.isOwn() && !mapRootClasses.containsKey(cl.qualifiedName)) {
+    for (StructClass cl : context.getOwnClasses().values()) {
+      if (!mapRootClasses.containsKey(cl.qualifiedName)) {
 
         if (bDecompileInner) {
           StructInnerClassesAttribute inner = (StructInnerClassesAttribute)cl.getAttributes().getWithKey("InnerClasses");
@@ -104,7 +104,7 @@ public class ClassesProcessor {
               }
 
               if (!innername.equals(enclClassName)) {  // self reference
-                StructClass enclosing_class = context.getClasses().get(enclClassName);
+                StructClass enclosing_class = context.getClass(enclClassName);
                 if (enclosing_class != null && enclosing_class.isOwn()) { // own classes only
 
                   Object[] arrold = mapInnerClasses.get(innername);

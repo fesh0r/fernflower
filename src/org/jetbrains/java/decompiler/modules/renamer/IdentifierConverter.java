@@ -187,7 +187,7 @@ public class IdentifierConverter implements NewClassNameBuilder {
         String classname = helper.getNextClassName(classOldFullName, ConverterHelper.getSimpleClassName(classOldFullName));
         classNewFullName = ConverterHelper.replaceSimpleClassName(classOldFullName, classname);
       }
-      while (context.getClasses().containsKey(classNewFullName));
+      while (context.getClass(classNewFullName) != null);
 
       interceptor.addName(classOldFullName, classNewFullName);
     }
@@ -327,16 +327,11 @@ public class IdentifierConverter implements NewClassNameBuilder {
 
   private void buildInheritanceTree() {
     Map<String, ClassWrapperNode> nodes = new HashMap<String, ClassWrapperNode>();
-    Map<String, StructClass> classes = context.getClasses();
 
     List<ClassWrapperNode> rootClasses = new ArrayList<ClassWrapperNode>();
     List<ClassWrapperNode> rootInterfaces = new ArrayList<ClassWrapperNode>();
 
-    for (StructClass cl : classes.values()) {
-      if (!cl.isOwn()) {
-        continue;
-      }
-
+    for (StructClass cl : context.getOwnClasses().values()) {
       LinkedList<StructClass> stack = new LinkedList<StructClass>();
       LinkedList<ClassWrapperNode> stackSubNodes = new LinkedList<ClassWrapperNode>();
 
@@ -368,7 +363,7 @@ public class IdentifierConverter implements NewClassNameBuilder {
 
           if (isInterface) {
             for (String ifName : clStr.getInterfaceNames()) {
-              StructClass clParent = classes.get(ifName);
+              StructClass clParent = context.getClass(ifName);
               if (clParent != null) {
                 stack.add(clParent);
                 stackSubNodes.add(node);
@@ -377,7 +372,7 @@ public class IdentifierConverter implements NewClassNameBuilder {
             }
           }
           else if (clStr.superClass != null) { // null iff java/lang/Object
-            StructClass clParent = classes.get(clStr.superClass.getString());
+            StructClass clParent = context.getClass(clStr.superClass.getString());
             if (clParent != null) {
               stack.add(clParent);
               stackSubNodes.add(node);
