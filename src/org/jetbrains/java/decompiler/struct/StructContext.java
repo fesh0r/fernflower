@@ -23,9 +23,11 @@ import org.jetbrains.java.decompiler.util.InterpreterUtil;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.jar.JarFile;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
@@ -49,6 +51,16 @@ public class StructContext {
 
   public StructClass getClass(String name) {
     return classes.get(name);
+  }
+  
+  public Map<String, StructClass> getOwnClasses() {
+      Map<String, StructClass> ownClasses = new HashMap<String, StructClass>();
+      for(Entry<String, StructClass> entry : classes.entrySet()) {
+          if(entry.getValue().isOwn()) {
+              ownClasses.put(entry.getKey(), entry.getValue());
+          }
+      }
+      return Collections.unmodifiableMap(ownClasses);
   }
 
   public void reloadContext() throws IOException {
@@ -181,9 +193,5 @@ public class StructContext {
     finally {
       archive.close();
     }
-  }
-
-  public Map<String, StructClass> getClasses() {
-    return classes;
   }
 }
