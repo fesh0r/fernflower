@@ -11,7 +11,30 @@ fernflower.decompiler@gmail.com
 http://www.apache.org/licenses/LICENSE-2.0
 
 
-3. Running from the command line
+3. Building with Gradle from the command line
+
+First of all, make sure that you have:
+
+- JDK 6 or later installed
+- JAVA_HOME environment variable exists
+- A direct Internet connection
+- Gradle 2.+ installed (or use gradlew)
+
+For users behind a proxy server, you have to create gradle.properties with proxy settings according Gradle userguide:
+https://docs.gradle.org/current/userguide/build_environment.html#sec:accessing_the_web_via_a_proxy
+
+The following command will assemble the package and perform tests:
+
+./gradlew build
+
+You can also run the application immediately after a build is finished:
+
+./gradlew run -PwithArgs="library.jar outputDir"
+
+If you're using Windows CMD command line just type "gradlew" instead of "./gradlew"
+
+
+4. Running from the command line
 
 java -jar fernflower.jar [-<option>=<value>]* [<source>]+ <destination>
 
@@ -31,7 +54,7 @@ java -jar fernflower.jar -hes=0 -hdc=0 c:\Temp\binary\ -e=c:\Java\rt.jar c:\Temp
 java -jar fernflower.jar -dgs=1 c:\Temp\binary\library.jar c:\Temp\binary\Boot.class c:\Temp\source\
 
 
-4. Command line options
+5. Command line options
 
 With the exception of mpm and urc the value of 1 means the option is activated, 0 - deactivated. Default 
 value, if any, is given between parentheses.
@@ -71,7 +94,7 @@ The default logging level is INFO. This value can be overwritten by setting the 
 log (INFO): possible values TRACE, INFO, WARN, ERROR
 
 
-5. Renaming identifiers
+6. Renaming identifiers
 
 Some obfuscators give classes and their member elements short, meaningless and above all ambiguous names. Recompiling of such
 code leads to a great number of conflicts. Therefore it is advisable to let the decompiler rename elements in its turn, 
