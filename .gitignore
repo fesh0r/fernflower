@@ -1,0 +1,5 @@
+# Gradle
+.gradle/
+build/
+out/
+gradle-app.setting

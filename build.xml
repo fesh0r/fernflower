@@ -2,10 +2,10 @@
 <project name="Fernflower" default="dist" basedir=".">
 
   <target name="init">
-    <property name="src" value="${basedir}/src"/>
+    <property name="src" value="${basedir}/src/main/java"/>
     <property name="out" value="${basedir}/out/production"/>
     <property name="dist" value="${basedir}/fernflower.jar"/>
-    <property name="test-src" value="${basedir}/test"/>
+    <property name="test-src" value="${basedir}/src/test/java"/>
     <property name="test-out" value="${basedir}/out/test"/>
   </target>
 
