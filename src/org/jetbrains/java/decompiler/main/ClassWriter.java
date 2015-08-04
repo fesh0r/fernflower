@@ -231,19 +231,22 @@ public class ClassWriter {
 
       VBStyleCollection<StructMethod, String> methods = cl.getMethods();
 
-      /* if clinit was originally located at the top of a class it will have been moved to the bottom, the linenumbertable however will contain the original numbers.
-         If this is the case when USE_DEBUG_LINE_NUMBERS is enabled, the clinit method must be moved back to the top of the list to prevent incorrect mapping of lines.
+       /*if clinit was not originally located at the bottom of the class, it will have been moved to the bottom, the linenumbertable however will contain the original numbers.
+         If this is the case when USE_DEBUG_LINE_NUMBERS is enabled, the clinit method must be moved back to its original position in the methods list to prevent incorrect mapping of lines.
        */
-      if( methods.getLast().hasModifier(CodeConstants.ACC_STATIC) && DecompilerContext.getOption(IFernflowerPreferences.USE_DEBUG_LINE_NUMBERS)  )
+      if( CodeConstants.CLINIT_NAME.equals(methods.getLast().getName()) && DecompilerContext.getOption(IFernflowerPreferences.USE_DEBUG_LINE_NUMBERS)  )
       {
-        int firstMethodFirstLine = ((StructLineNumberTableAttribute)cl.getMethods().get(1).getAttributes().
-                getWithKey(StructGeneralAttribute.ATTRIBUTE_LINE_NUMBER_TABLE)).getFirstLine();
         int staticFirstLine = ((StructLineNumberTableAttribute)methods.getLast().getAttributes().
                 getWithKey(StructGeneralAttribute.ATTRIBUTE_LINE_NUMBER_TABLE)).getFirstLine();
 
-        if( staticFirstLine < firstMethodFirstLine)
+        for( int j = 1; j < methods.size() -1; j++ )
         {
-          methods.add( 1, methods.remove( methods.size() - 1 ) );
+          if( staticFirstLine < ((StructLineNumberTableAttribute) methods.get(j).getAttributes().
+                  getWithKey(StructGeneralAttribute.ATTRIBUTE_LINE_NUMBER_TABLE)).getFirstLine() )
+          {
+            methods.add( j, methods.remove( methods.size() - 1) );
+            break;
+          }
         }
       }
 
