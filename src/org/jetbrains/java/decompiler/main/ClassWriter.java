@@ -42,6 +42,7 @@ import org.jetbrains.java.decompiler.struct.gen.MethodDescriptor;
 import org.jetbrains.java.decompiler.struct.gen.VarType;
 import org.jetbrains.java.decompiler.struct.gen.generics.*;
 import org.jetbrains.java.decompiler.util.InterpreterUtil;
+import org.jetbrains.java.decompiler.util.VBStyleCollection;
 
 import java.util.*;
 
@@ -227,8 +228,30 @@ public class ClassWriter {
       // FIXME: fields don't matter at the moment
       startLine += buffer.countLines(start_class_def);
 
+
+      VBStyleCollection<StructMethod, String> methods = cl.getMethods();
+
+       /*if clinit was not originally located at the bottom of the class, it will have been moved to the bottom, the linenumbertable however will contain the original numbers.
+         If this is the case when USE_DEBUG_LINE_NUMBERS is enabled, the clinit method must be moved back to its original position in the methods list to prevent incorrect mapping of lines.
+       */
+      if( CodeConstants.CLINIT_NAME.equals(methods.getLast().getName()) && DecompilerContext.getOption(IFernflowerPreferences.USE_DEBUG_LINE_NUMBERS)  )
+      {
+        int staticFirstLine = ((StructLineNumberTableAttribute)methods.getLast().getAttributes().
+                getWithKey(StructGeneralAttribute.ATTRIBUTE_LINE_NUMBER_TABLE)).getFirstLine();
+
+        for( int j = 1; j < methods.size() -1; j++ )
+        {
+          if( staticFirstLine < ((StructLineNumberTableAttribute) methods.get(j).getAttributes().
+                  getWithKey(StructGeneralAttribute.ATTRIBUTE_LINE_NUMBER_TABLE)).getFirstLine() )
+          {
+            methods.add( j, methods.remove( methods.size() - 1) );
+            break;
+          }
+        }
+      }
+
       // methods
-      for (StructMethod mt : cl.getMethods()) {
+      for ( StructMethod mt : methods ) {
         boolean hide = mt.isSynthetic() && DecompilerContext.getOption(IFernflowerPreferences.REMOVE_SYNTHETIC) ||
                        mt.hasModifier(CodeConstants.ACC_BRIDGE) && DecompilerContext.getOption(IFernflowerPreferences.REMOVE_BRIDGE) ||
                        wrapper.getHiddenMembers().contains(InterpreterUtil.makeUniqueKey(mt.getName(), mt.getDescriptor()));
@@ -655,7 +678,7 @@ public class ClassWriter {
           init = true;
         }
       }
-      else if (CodeConstants.CLINIT_NAME.equals(name)) {
+      else if ( CodeConstants.CLINIT_NAME.equals(name) ) {
         name = "";
         clinit = true;
       }
@@ -835,7 +858,7 @@ public class ClassWriter {
         // We do not have line information for method start, lets have it here for now
         StructLineNumberTableAttribute lineNumberTable =
           (StructLineNumberTableAttribute)mt.getAttributes().getWithKey(StructGeneralAttribute.ATTRIBUTE_LINE_NUMBER_TABLE);
-        if (lineNumberTable != null && DecompilerContext.getOption(IFernflowerPreferences.USE_DEBUG_LINE_NUMBERS)) {
+        if (lineNumberTable != null && DecompilerContext.getOption(IFernflowerPreferences.USE_DEBUG_LINE_NUMBERS) ) {
           buffer.setCurrentLine(lineNumberTable.getFirstLine() - 1);
         }
         buffer.append('{').appendLineSeparator();
