@@ -13,6 +13,13 @@ http://www.apache.org/licenses/LICENSE-2.0
 
 3. Running from the command line
 
+Build it first: 
+
+$ cd fernflower
+$ ant
+
+then run it:
+
 java -jar fernflower.jar [-<option>=<value>]* [<source>]+ <destination>
 
 * means 0 or more times
