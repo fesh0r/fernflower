@@ -1,0 +1,17 @@
+apply plugin: "java"
+
+jar.manifest.attributes("Main-Class": "org.jetbrains.java.decompiler.main.decompiler.ConsoleDecompiler")
+
+sourceSets {
+    main.java.srcDir "src/"
+    test.java.srcDir "test/"
+}
+
+repositories {
+  jcenter()
+}
+
+dependencies {
+  testCompile "junit:junit:4.12"
+  testCompile "org.hamcrest:hamcrest-all:1.3"
+}
