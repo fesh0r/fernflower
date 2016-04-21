@@ -174,10 +174,32 @@ public class StructClass extends StructMember {
     if (DecompilerContext.getOption(IFernflowerPreferences.FIELD_DECLARATION_ORDER) && !hasModifier(CodeConstants.ACC_ENUM)) {
       VBStyleCollection<StructField, String> sorted = new VBStyleCollection<StructField, String>();
 
+      List<StructField> unSorted = new ArrayList<StructField>();
+
+      /**
+       * First we add the original fields to the new collection as long
+       * as they are not in the fieldOrder list, otherwise we add them to the to-be sorted list.
+       */
+      for (StructField s : fields) {
+        String key = InterpreterUtil.makeUniqueKey(s.getName(), s.getDescriptor());
+
+        if (!sorted.containsKey(key) && !fieldOrder.contains(s.getName())) {
+          sorted.addWithKey(s, key);
+        } else {
+          unSorted.add(s);
+        }
+      }
+
+      /**
+       * Then we loop through and sort the remaining fields in the order they appear
+       * in the fieldOrder list.
+       */
       for (String name : fieldOrder) {
-        for (StructField s : fields) {
-          if (name.equals(s.getName()) && !sorted.containsKey(s.getName())) {
-            sorted.addWithKey(s, s.getName());
+        for (StructField s : unSorted) {
+          String key = InterpreterUtil.makeUniqueKey(s.getName(), s.getDescriptor());
+
+          if (!sorted.containsKey(key) && name.equals(s.getName())) {
+            sorted.addWithKey(s, key);
             break;
           }
         }
