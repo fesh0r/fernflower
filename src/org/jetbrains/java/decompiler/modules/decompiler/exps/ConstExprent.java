@@ -263,14 +263,16 @@ public class ConstExprent extends Exprent {
             VarType classtype;
             
             //we must check renamer...
-            String lookupName = strval;
-            if (lookupName.charAt(0) == '[') {
-                lookupName = lookupName.substring(1);
-            }
-            lookupName = lookupName.replace('.', '/');
-            String newName = DecompilerContext.getPoolInterceptor().getName(lookupName);
-            if (newName != null) {
-                strval = newName;
+            if (DecompilerContext.getPoolInterceptor() != null) {
+                String lookupName = strval;
+                if (lookupName.charAt(0) == '[') {
+                    lookupName = lookupName.substring(1);
+                }
+                lookupName = lookupName.replace('.', '/');
+                String newName = DecompilerContext.getPoolInterceptor().getName(lookupName);
+                if (newName != null) {
+                    strval = newName;
+                }
             }
 
             if (strval.startsWith("[")) { // array of simple type
