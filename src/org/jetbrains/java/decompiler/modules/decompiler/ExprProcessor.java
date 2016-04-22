@@ -891,15 +891,15 @@ public class ExprProcessor implements CodeConstants {
                                          TextBuffer buffer,
                                          int indent,
                                          boolean castNull,
-                                         boolean castAlways,
+                                         boolean requiresExactTypeMatch,
                                          BytecodeMappingTracer tracer) {
 
     VarType rightType = exprent.getExprType();
 
     TextBuffer res = exprent.toJava(indent, tracer);
-
+    
     boolean cast =
-      castAlways ||
+      (requiresExactTypeMatch && !leftType.equals(exprent.getExprType())) ||
       (!leftType.isSuperset(rightType) && (rightType.equals(VarType.VARTYPE_OBJECT) || leftType.type != CodeConstants.TYPE_OBJECT)) ||
       (castNull && rightType.type == CodeConstants.TYPE_NULL && !UNDEFINED_TYPE_STRING.equals(getTypeName(leftType))) ||
       (isIntConstant(exprent) && VarType.VARTYPE_INT.isStrictSuperset(leftType));
