@@ -225,7 +225,7 @@ public class NewExprent extends Exprent {
               }
             }
 
-            ExprProcessor.getCastedExprent(param, invSuper.getDescriptor().params[i], buf, indent, true, tracer);
+            ExprProcessor.getCastedExprent(param, invSuper.getDescriptor().params[i], buf, indent, true, true, tracer);
 
             firstParam = false;
           }

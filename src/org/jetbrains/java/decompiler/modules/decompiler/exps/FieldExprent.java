@@ -124,7 +124,7 @@ public class FieldExprent extends Exprent {
       }
       else {
         TextBuffer buff = new TextBuffer();
-        boolean casted = ExprProcessor.getCastedExprent(instance, new VarType(CodeConstants.TYPE_OBJECT, 0, classname), buff, indent, true, tracer);
+        boolean casted = ExprProcessor.getCastedExprent(instance, new VarType(CodeConstants.TYPE_OBJECT, 0, classname), buff, indent, true, true, tracer);
         String res = buff.toString();
 
         if (casted || instance.getPrecedence() > getPrecedence()) {

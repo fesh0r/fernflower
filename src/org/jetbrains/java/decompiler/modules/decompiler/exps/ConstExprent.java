@@ -261,13 +261,25 @@ public class ConstExprent extends Exprent {
             String strval = value.toString();
 
             VarType classtype;
-            if (strval.startsWith("[")) { // array of simple type
-              classtype = new VarType(strval, false);
+            
+            //we must check renamer...
+            String lookupName = strval;
+            if (lookupName.charAt(0) == '[') {
+                lookupName = lookupName.substring(1);
             }
-            else { // class
-              classtype = new VarType(strval, true);
+            lookupName = lookupName.replace('.', '/');
+            String newName = DecompilerContext.getPoolInterceptor().getName(lookupName);
+            if (newName != null) {
+                strval = newName;
             }
 
+            if (strval.startsWith("[")) { // array of simple type
+                classtype = new VarType(strval, false);
+            }
+              else { // class
+                classtype = new VarType(strval, true);
+            }
+            
             return new TextBuffer(ExprProcessor.getCastTypeName(classtype)).append(".class");
           }
       }

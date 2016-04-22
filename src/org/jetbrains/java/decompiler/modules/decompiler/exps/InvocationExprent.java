@@ -256,25 +256,15 @@ public class InvocationExprent extends Exprent {
           TextUtil.writeQualifiedSuper(buf, super_qualifier);
         }
         else if (instance != null) {
-          TextBuffer res = instance.toJava(indent, tracer);
+          TextBuffer buff = new TextBuffer();
+          boolean casted = ExprProcessor.getCastedExprent(instance, new VarType(CodeConstants.TYPE_OBJECT, 0, classname), buff, indent, true, true, tracer);
+          String res = buff.toString();
 
-          VarType rightType = instance.getExprType();
-          VarType leftType = new VarType(CodeConstants.TYPE_OBJECT, 0, classname);
+          if (casted || instance.getPrecedence() > getPrecedence()) {
+            res = "(" + res + ")";
+          }
 
-          if (rightType.equals(VarType.VARTYPE_OBJECT) && !leftType.equals(rightType)) {
-            buf.append("((").append(ExprProcessor.getCastTypeName(leftType)).append(")");
-
-            if (instance.getPrecedence() >= FunctionExprent.getPrecedence(FunctionExprent.FUNCTION_CAST)) {
-              res.enclose("(", ")");
-            }
-            buf.append(res).append(")");
-          }
-          else if (instance.getPrecedence() > getPrecedence()) {
-            buf.append("(").append(res).append(")");
-          }
-          else {
-            buf.append(res);
-          }
+          buf.append(res);
         }
       }
     }
@@ -329,8 +319,6 @@ public class InvocationExprent extends Exprent {
       }
     }
 
-    BitSet setAmbiguousParameters = getAmbiguousParameters();
-
     boolean firstParameter = true;
     int start = isEnum ? 2 : 0;
     for (int i = start; i < lstParameters.size(); i++) {
@@ -338,10 +326,9 @@ public class InvocationExprent extends Exprent {
         if (!firstParameter) {
           buf.append(", ");
         }
-
+        
         TextBuffer buff = new TextBuffer();
-        boolean ambiguous = setAmbiguousParameters.get(i);
-        ExprProcessor.getCastedExprent(lstParameters.get(i), descriptor.params[i], buff, indent, true, ambiguous, tracer);
+        ExprProcessor.getCastedExprent(lstParameters.get(i), descriptor.params[i], buff, indent, true, true, tracer);
         buf.append(buff);
 
         firstParameter = false;
@@ -351,58 +338,6 @@ public class InvocationExprent extends Exprent {
     buf.append(")");
 
     return buf;
-  }
-
-  private BitSet getAmbiguousParameters() {
-    StructClass cl = DecompilerContext.getStructContext().getClass(classname);
-    if (cl == null) return EMPTY_BIT_SET;
-
-    // check number of matches
-    List<MethodDescriptor> matches = new ArrayList<MethodDescriptor>();
-    nextMethod:
-    for (StructMethod mt : cl.getMethods()) {
-      if (name.equals(mt.getName())) {
-        MethodDescriptor md = MethodDescriptor.parseDescriptor(mt.getDescriptor());
-        if (md.params.length == descriptor.params.length) {
-          for (int i = 0; i < md.params.length; i++) {
-            if (md.params[i].typeFamily != descriptor.params[i].typeFamily) {
-              continue nextMethod;
-            }
-          }
-          matches.add(md);
-        }
-      }
-    }
-    if (matches.size() == 1) return EMPTY_BIT_SET;
-
-    // check if a call is unambiguous
-    StructMethod mt = cl.getMethod(InterpreterUtil.makeUniqueKey(name, stringDescriptor));
-    if (mt != null) {
-      MethodDescriptor md = MethodDescriptor.parseDescriptor(mt.getDescriptor());
-      if (md.params.length == lstParameters.size()) {
-        boolean exact = true;
-        for (int i = 0; i < md.params.length; i++) {
-          if (!md.params[i].equals(lstParameters.get(i).getExprType())) {
-            exact = false;
-            break;
-          }
-        }
-        if (exact) return EMPTY_BIT_SET;
-      }
-    }
-
-    // mark parameters
-    BitSet ambiguous = new BitSet(descriptor.params.length);
-    for (int i = 0; i < descriptor.params.length; i++) {
-      VarType paramType = descriptor.params[i];
-      for (MethodDescriptor md : matches) {
-        if (!paramType.equals(md.params[i])) {
-          ambiguous.set(i);
-          break;
-        }
-      }
-    }
-    return ambiguous;
   }
 
   @Override
