@@ -35,7 +35,7 @@ public class SingleClassesTest {
   @Before
   public void setUp() throws IOException {
     fixture = new DecompilerTestFixture();
-    fixture.setUp(IFernflowerPreferences.BYTECODE_SOURCE_MAPPING, "1",
+    fixture.setUp(null, IFernflowerPreferences.BYTECODE_SOURCE_MAPPING, "1",
                   IFernflowerPreferences.DUMP_ORIGINAL_LINES, "1");
   }
 
