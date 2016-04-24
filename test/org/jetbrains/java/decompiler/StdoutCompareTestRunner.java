@@ -39,23 +39,22 @@ import static org.junit.Assert.assertTrue;
 public class StdoutCompareTestRunner {
   private String stdoutExpectedPath;
   private String stdoutPath;
-  private boolean isRenaming;
-  
-  private static String expectedBaseDir = System.getProperty("stdoutTests.expected.dir");
-  private static String normalBaseDir = System.getProperty("stdoutTests.normal.dir");
-  private static String renamingBaseDir = System.getProperty("stdoutTests.renaming.dir");
 
-  public StdoutCompareTestRunner(String testName, String stdoutExpectedPath, String stdoutPath, boolean isRenaming) {
-    //this.testName = testName;
+  private static String expectedBaseDir = System.getProperty("stdoutTests.expected.dir");
+  private static String decompileBaseDir = System.getProperty("stdoutTests.decompile.dir");
+
+  public StdoutCompareTestRunner(String testName, String stdoutExpectedPath, String stdoutPath) {
     this.stdoutExpectedPath = stdoutExpectedPath;
     this.stdoutPath = stdoutPath;
-    this.isRenaming = isRenaming;
   }
-  
+
+  /**
+   * @return list with constructor arguments, first one is used in test name
+   */
   @Parameters(name = "{0}")
   public static Collection<Object[]> data() {
     Collection<Object[]> ctorParams = new ArrayList<Object[]>();
-    
+
     File expectedDir = new File(expectedBaseDir + "/results");
     FilenameFilter filter = new FilenameFilter() {
       @Override
@@ -64,15 +63,13 @@ public class StdoutCompareTestRunner {
       }
     };
     for(File f: expectedDir.listFiles(filter)) {
-      String normalName = normalBaseDir + "/results/" + f.getName();
-      String renamingName = renamingBaseDir + "/results/" + f.getName();
-      ctorParams.add(new Object[] { "normal:" + f.getName(), f.getPath(), normalName, false});
-      ctorParams.add(new Object[] { "renaming:" + f.getName(), f.getPath(), renamingName, true });
+      String normalName = decompileBaseDir + "/results/" + f.getName();
+      ctorParams.add(new Object[] { f.getName().replace(".output.txt", ""), f.getPath(), normalName});
     }
     return ctorParams;
   }
-  
-  
+
+
 
   @Before
   public void setUp() throws IOException {
@@ -87,67 +84,62 @@ public class StdoutCompareTestRunner {
   public void compareStdoutTest() throws Exception{
     File stdoutExpected = new File(stdoutExpectedPath);
     File stdout = new File(stdoutPath);
-    
+
     assertTrue("Error in test, this should not happen (expected output not found)", stdoutExpected.isFile());
-    assertTrue("Did not find output at: " + stdoutExpected.getPath(), stdout.isFile());
-    
+    assertTrue("Did not find output (was compilation of case disabled (see build.xml) because it would fail?), at: " + stdoutExpected.getPath(), stdout.isFile());
+
     assertFilesEqual(stdoutExpected, stdout);
-    
+
     File exceptionFile = new File(stdout.getPath().replace(".output.txt", ".exception.txt"));
     File exceptionExpectedFile = new File(stdoutExpected.getPath().replace(".output.txt", ".exception.txt"));
-    
+
     //main of tests should not throw!!! but we check if it did in run of original classes too
     assertTrue("Original classes did throw from main on running, fix the test.", !exceptionExpectedFile.isFile());
     assertTrue("The decompiled code threw an unexpected exception: " + exceptionFile.getPath(), !exceptionFile.isFile());
-    
+
     validatePatterns(stdoutExpected, stdout);
   }
-  
+
   private void validatePatterns(File stdoutExpected, File stdout) throws Exception {
-    
+
     //check stdout if there are patterns for it provided
     //construct path of pattern file:
     String baseFileName = stdoutExpected.getAbsolutePath().replace(new File(expectedBaseDir).getAbsolutePath() + "/results/", "");
     baseFileName = baseFileName.replace(".output.txt", "").replace(".", "/");
-    
+
     File testData = DecompilerTestFixture.findTestDataDir();
     File patternFile = new File(testData.getPath() + "/src-stdout/" + baseFileName  + ".pattern.txt");
     System.out.println("DEBUG: looking for pattern file: " + patternFile.getPath());
     if (patternFile.isFile()) {
       System.out.println("DEBUG: pattern file found: " + patternFile.getPath());
-      
+
       //get decompiled java file:
-      String javaBaseDir;
-      if (!isRenaming) {
-        javaBaseDir = normalBaseDir + "/decompiled/";
-      }
-      else {
-        javaBaseDir = renamingBaseDir + "/decompiled/";
-      }
+      String javaBaseDir = decompileBaseDir + "/decompiled/";
+
       String javaFilePath = javaBaseDir + baseFileName.replace(".", "/") + ".java";
       String javaContent = new String(Files.readAllBytes(Paths.get(javaFilePath)));
-      
+
       List<String[]> patterns = parsePatternFile(patternFile);
       for (String[] p: patterns) {
-        if (!p[0].equals("all") && !stdout.getName().contains("." + p[0] + ".")) {
-          continue;
-        }
-        System.out.println("DEBUG: using pattern (" + p[1] + "): " + p[2]);
-        
-        
-        Pattern pat = Pattern.compile(".*?" + p[2] + ".*?", Pattern.DOTALL | Pattern.MULTILINE);
-        if (p[1].equals("matches")) {
-          assertTrue("Matches regex (" + p[2] + ") failed on: " + javaFilePath, pat.matcher(javaContent).matches());
+        System.out.println("DEBUG: using pattern (" + p[0] + "): " + p[1]);
+
+
+        Pattern pat = Pattern.compile(".*?" + p[1] + ".*?", Pattern.DOTALL | Pattern.MULTILINE);
+        if (p[0].equals("matches")) {
+          assertTrue("Matches regex (" + p[1] + ") failed on: " + javaFilePath, pat.matcher(javaContent).matches());
         }
         else {
-          assertTrue("Not matches regex (" + p[2] + ") failed on " + javaFilePath, !pat.matcher(javaContent).matches());
+          assertTrue("Not matches regex (" + p[1] + ") failed on " + javaFilePath, !pat.matcher(javaContent).matches());
         }
       }
     }
   }
-  
+
+  /**
+   * @return entrys: match_type {'matches', '!matches'}, regex
+   */
   private List<String[]> parsePatternFile(File f) throws Exception {
-    //entry: decompile_type {'all','normal','renaming'}, match_type {'matches', '!matches'}, regex 
+    // 
     List<String[]> res = new ArrayList<String[]>();
     BufferedReader br = new BufferedReader(new FileReader(f));
     String cur = null;
@@ -160,23 +152,11 @@ public class StdoutCompareTestRunner {
       assertTrue(errMsg, cur.indexOf(':') > 0);
       String t = cur.substring(0, cur.indexOf(':'));
       String v = cur.substring(cur.indexOf(':') + 1, cur.length()).trim();
-      String[] tp = t.split("[.]");
-      assertTrue(errMsg, tp.length == 1 || tp.length == 2);
-      String decompType;
-      String matchType;
-      if (tp.length == 2) {
-        matchType = tp[0].trim();
-        decompType = tp[1].trim();
-      }
-      else {
-        matchType = tp[0].trim();
-        decompType = "all";
-      }
-      //System.out.println("DEBUG: '" + matchType + "', '" + decompType + "': " + v);
-      assertTrue(errMsg, matchType.equals("matches") || matchType.equals("!matches"));
-      assertTrue(errMsg, decompType.equals("all") || decompType.equals("normal") || decompType.equals("renaming"));
-      res.add(new String[] { decompType, matchType, v});
+
+      assertTrue(errMsg, t.equals("matches") || t.equals("!matches"));
+      res.add(new String[] { t, v});
     }
+    br.close();
     return res;
   }
 }

@@ -62,15 +62,16 @@
 
 
   <target name="test-stdout" depends="init,test-compile,test-stdout-prepare">
-    <junit printsummary="true" failureproperty="tests.failed" fork="true">
+    <junit printsummary="true" failureproperty="tests.failed" fork="true" >
       <classpath path="${test-out}:${out}"/>
       <classpath refid="junit"/>
       <sysproperty key="stdoutTests.expected.dir" value="${stdoutTests.expected.dir}"/>
-      <sysproperty key="stdoutTests.normal.dir"   value="${stdoutTests.normal.dir}"/>
+      <sysproperty key="stdoutTests.decompile.dir"   value="${stdoutTests.decompile.dir}"/>
       <sysproperty key="stdoutTests.renaming.dir" value="${stdoutTests.renaming.dir}"/>
       <batchtest >
         <fileset dir="${test-src}" includes="**/StdoutCompareTestRunner.java"/>
       </batchtest>
+      
       <!-- look at output -->
       <formatter type="plain" usefile="false" /> <!-- to screen -->
       <formatter type="plain" /> <!-- to file -->
@@ -89,27 +90,21 @@
   <target name="test-stdout-prepare" depends="init">
     <!--tempfile property="stdoutTests.temp.dir" destDir="${java.io.tmpdir}" prefix="decompiler_test_" suffix="_stdoutTests_dir"/-->
     <property name="stdoutTests.temp.dir" value="tmp_decompiler_test_stdoutTests_dir"/>
-    
     <property name="stdoutTests.expected.dir" value="${stdoutTests.temp.dir}/expected"/>
-    <property name="stdoutTests.normal.dir" value="${stdoutTests.temp.dir}/normalTest"/>
-    <property name="stdoutTests.renaming.dir" value="${stdoutTests.temp.dir}/renamingTest"/>
+    <property name="stdoutTests.decompile.dir" value="${stdoutTests.temp.dir}/normalTest"/>
     
     <!-- delete previous outputs if they exist -->
     <delete includeemptydirs="true" failonerror="false">
       <fileset dir="${stdoutTests.expected.dir}"/>
-      <fileset dir="${stdoutTests.normal.dir}"/>
-      <fileset dir="${stdoutTests.renaming.dir}"/>
+      <fileset dir="${stdoutTests.decompile.dir}"/>
     </delete>
     
     <!--mkdir dir="${stdoutTests.temp.dir}" /-->
     <mkdir dir="${stdoutTests.expected.dir}/classes"/>
     <mkdir dir="${stdoutTests.expected.dir}/results"/>
-    <mkdir dir="${stdoutTests.normal.dir}/classes"/>
-    <!--mkdir dir="${stdoutTests.normal.dir}/decompiled"/-->
-    <mkdir dir="${stdoutTests.normal.dir}/results"/>
-    <mkdir dir="${stdoutTests.renaming.dir}/classes"/>
-    <!--mkdir dir="${stdoutTests.renaming.dir}/decompiled"/-->
-    <mkdir dir="${stdoutTests.renaming.dir}/results"/>
+    <mkdir dir="${stdoutTests.decompile.dir}/classes"/>
+    <!--mkdir dir="${stdoutTests.decompile.dir}/decompiled"/-->
+    <mkdir dir="${stdoutTests.decompile.dir}/results"/>
     
     <!-- compile the test cases from testData -->
     <javac srcdir="${test-data}/src-stdout/stdoutTests" destdir="${stdoutTests.expected.dir}/classes"
@@ -128,53 +123,27 @@
     <java classname="org.jetbrains.java.decompiler.StdoutCompareTestHelper">
       <arg value="decompile"/>
       <arg value="${stdoutTests.expected.dir}/classes"/>
-      <arg value="${stdoutTests.normal.dir}"/>
+      <arg value="${stdoutTests.decompile.dir}"/>
         
-      <classpath path="${test-out}"/>
-      <classpath path="${out}"/>
-      <classpath refid="junit"/>
-    </java>
-    <!-- decompile the classes using renaming -->
-    <java classname="org.jetbrains.java.decompiler.StdoutCompareTestHelper">
-      <arg value="decompile-renaming"/>
-      <arg value="${stdoutTests.expected.dir}/classes"/>
-      <arg value="${stdoutTests.renaming.dir}"/>
-    
       <classpath path="${test-out}"/>
       <classpath path="${out}"/>
       <classpath refid="junit"/>
     </java>
     <!-- compile the decompiled classes -->
-    <javac srcdir="${stdoutTests.normal.dir}/decompiled" destdir="${stdoutTests.normal.dir}/classes"
+    <javac srcdir="${stdoutTests.decompile.dir}/decompiled" destdir="${stdoutTests.decompile.dir}/classes"
       source="1.8" target="1.8" encoding="UTF-8" debug="true" includeantruntime="false" failonerror="false">
+      <!-- exclude test cases to do not compile on original fernflower until fixed -->
       <exclude name="**/PrivateAccess.java"/>
-    </javac>
-
-    <javac srcdir="${stdoutTests.renaming.dir}/decompiled" destdir="${stdoutTests.renaming.dir}/classes"
-      source="1.8" target="1.8" encoding="UTF-8" debug="true" includeantruntime="false" failonerror="false">
-      <exclude name="**/PrivateAccess.java"/>
-    </javac>
-    
+    </javac>    
     <!-- now run the decompiled classes -->
-    <!-- run test cases from decompile -->
     <java classname="org.jetbrains.java.decompiler.StdoutCompareTestHelper">
       <arg value="run"/>
-      <arg value="${stdoutTests.normal.dir}/results"/>
+      <arg value="${stdoutTests.decompile.dir}/results"/>
         
       <classpath path="${test-out}"/>
       <classpath path="${out}"/>
       <classpath refid="junit"/>
-      <classpath path="${stdoutTests.normal.dir}/classes"/>
-    </java>
-    <!-- run test cases from decompile-renaming -->
-    <java classname="org.jetbrains.java.decompiler.StdoutCompareTestHelper">
-      <arg value="run"/>
-      <arg value="${stdoutTests.renaming.dir}/results"/>
-        
-      <classpath path="${test-out}"/>
-      <classpath path="${out}"/>
-      <classpath refid="junit"/>
-      <classpath path="${stdoutTests.renaming.dir}/classes"/>
+      <classpath path="${stdoutTests.decompile.dir}/classes"/>
     </java>
   </target>
 

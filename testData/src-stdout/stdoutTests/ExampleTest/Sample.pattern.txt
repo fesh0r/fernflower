@@ -14,16 +14,4 @@ matches:System[.]out[.]println
 !matches:[$]assertionsDisabled
 
 
-# check normal decompile only:
-matches.normal:main[(]
-!matches.normal:notExistingMethod[(][)]
-
-# check renaming decompile only:
-matches.renaming:System[.]out[.]println
-!matches.renaming:[$]assertionsDisabled
-
-# you can also use 'all' instead of 'normal' or 'renaming', it is the default that is used if none is specified
-# so the following 2 are the same:
- matches:System[.]out[.]println
- matches.all:System[.]out[.]println
 
