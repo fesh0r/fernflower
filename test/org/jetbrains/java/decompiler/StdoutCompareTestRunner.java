@@ -16,6 +16,7 @@
 package org.jetbrains.java.decompiler;
 
 import org.junit.After;
+import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -39,13 +40,15 @@ import static org.junit.Assert.assertTrue;
 public class StdoutCompareTestRunner {
   private String stdoutExpectedPath;
   private String stdoutPath;
+  private boolean skip;
 
-  private static String expectedBaseDir = System.getProperty("stdoutTests.expected.dir");
-  private static String decompileBaseDir = System.getProperty("stdoutTests.decompile.dir");
+  private static String expectedBaseDir = System.getProperty("stdout-tests.expected.dir");
+  private static String decompileBaseDir = System.getProperty("stdout-tests.decompile.dir");
 
-  public StdoutCompareTestRunner(String testName, String stdoutExpectedPath, String stdoutPath) {
+  public StdoutCompareTestRunner(String testName, String stdoutExpectedPath, String stdoutPath, boolean skip) {
     this.stdoutExpectedPath = stdoutExpectedPath;
     this.stdoutPath = stdoutPath;
+    this.skip = skip;
   }
 
   /**
@@ -59,12 +62,24 @@ public class StdoutCompareTestRunner {
     FilenameFilter filter = new FilenameFilter() {
       @Override
       public boolean accept(File dir, String name) {
-        return name.endsWith(".output.txt");
+        return name.endsWith(".output.txt") || name.endsWith(".skip.txt");
       }
     };
-    for(File f: expectedDir.listFiles(filter)) {
-      String normalName = decompileBaseDir + "/results/" + f.getName();
-      ctorParams.add(new Object[] { f.getName().replace(".output.txt", ""), f.getPath(), normalName});
+    File[] files = expectedDir.listFiles(filter);
+    if (files != null) {
+      for(File f: files) {
+        String normalName = decompileBaseDir + "/results/" + f.getName();
+        String caseName;
+        boolean skip = false;
+        if (f.getName().endsWith(".output.txt")) {
+          caseName = f.getName().replace(".output.txt", "");
+        }
+        else {
+          caseName = f.getName().replace(".skip.txt", "");
+          skip = true;
+        }
+        ctorParams.add(new Object[] { caseName, f.getPath(), normalName, skip});
+      }
     }
     return ctorParams;
   }
@@ -82,6 +97,9 @@ public class StdoutCompareTestRunner {
 
   @Test
   public void compareStdoutTest() throws Exception{
+    //skip test if the expected output was 'skip'
+    Assume.assumeFalse("Skipped because no expected output. That normally means test is disabled per stdout-tests.exclude.pattern from build.xml.", skip);
+    
     File stdoutExpected = new File(stdoutExpectedPath);
     File stdout = new File(stdoutPath);
 
@@ -109,9 +127,9 @@ public class StdoutCompareTestRunner {
 
     File testData = DecompilerTestFixture.findTestDataDir();
     File patternFile = new File(testData.getPath() + "/src-stdout/" + baseFileName  + ".pattern.txt");
-    System.out.println("DEBUG: looking for pattern file: " + patternFile.getPath());
+    //System.out.println("DEBUG: looking for pattern file: " + patternFile.getPath());
     if (patternFile.isFile()) {
-      System.out.println("DEBUG: pattern file found: " + patternFile.getPath());
+      //System.out.println("DEBUG: pattern file found: " + patternFile.getPath());
 
       //get decompiled java file:
       String javaBaseDir = decompileBaseDir + "/decompiled/";
@@ -121,7 +139,7 @@ public class StdoutCompareTestRunner {
 
       List<String[]> patterns = parsePatternFile(patternFile);
       for (String[] p: patterns) {
-        System.out.println("DEBUG: using pattern (" + p[0] + "): " + p[1]);
+        //System.out.println("DEBUG: using pattern (" + p[0] + "): " + p[1]);
 
 
         Pattern pat = Pattern.compile(".*?" + p[1] + ".*?", Pattern.DOTALL | Pattern.MULTILINE);

@@ -1,12 +1,12 @@
-package stdoutTests.renaming;
+package javadefault.renaming;
 
 /**
- * renaming did not work for access to .class
+ * renaming did not work for access to .class (used from ClassFieldRenaming.java)
  */
-public class ClassFieldRenaming {
+public class A {
 
     public void f() {
-        Class x = ClassFieldRenaming.class;
+        Class x = A.class;
         Class y = I.class;
         Class z = I.J.class;
         printWhichClass(x);
@@ -16,7 +16,7 @@ public class ClassFieldRenaming {
     
     public static class I {
         public void f() {
-            Class x = ClassFieldRenaming.class;
+            Class x = A.class;
             Class y = I.class;
             Class z = J.class;
             
@@ -30,7 +30,7 @@ public class ClassFieldRenaming {
         
         public static class J {
             public void f() {
-                Class x = ClassFieldRenaming.class;
+                Class x = A.class;
                 Class y = I.class;
                 Class z = J.class;
                 
@@ -43,13 +43,14 @@ public class ClassFieldRenaming {
     
     public static void printWhichClass(Object x) {
       System.out.println("printWhichClass:");
-      System.out.println(new ClassFieldRenaming().getClass().equals(x));
+      System.out.println(new A().getClass().equals(x));
       System.out.println(new I().getClass().equals(x));
       System.out.println(new I.J().getClass().equals(x));
     }
     
-    public static void main(String[] args) {
-      new ClassFieldRenaming().f();
+    /** cannot have real main, renaming of classes would mean this main is no longer found. **/
+    public static void mainXXX(String[] args) {
+      new A().f();
       new I().f();
       new I.J().f();
     }

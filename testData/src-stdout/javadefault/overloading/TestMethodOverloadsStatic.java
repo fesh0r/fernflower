@@ -1,4 +1,4 @@
-package stdoutTests.methodAndFieldSelection;
+package javadefault.overloading;
 
 public class TestMethodOverloadsStatic {
 public static class Base {

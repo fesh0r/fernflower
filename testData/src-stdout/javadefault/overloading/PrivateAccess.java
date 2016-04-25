@@ -1,4 +1,4 @@
-package stdoutTests.methodAndFieldSelection;
+package javadefault.overloading;
 
 /**
  * because of missing casts it created code that accessed private fields and methods...

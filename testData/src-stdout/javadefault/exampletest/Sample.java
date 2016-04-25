@@ -1,4 +1,4 @@
-package stdoutTests.ExampleTest;
+package javadefault.exampletest;
 
 public class Sample {
   
@@ -13,7 +13,7 @@ public class Sample {
     //if the names are so that renamer kicks in...
     public static class X {
       public void f() {
-        System.out.println("called x.foo, but in renamer case the class and method will have different name");
+        System.out.println("called X.f(), but because of active renaming, it would be different name in decompiled case...");
       }
     }
 }

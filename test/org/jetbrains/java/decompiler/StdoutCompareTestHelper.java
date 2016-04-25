@@ -45,14 +45,13 @@ public class StdoutCompareTestHelper {
 
   private static DecompilerTestFixture createDecompiler(String externalTempDir) throws IOException {
     List<String> params = new ArrayList<String>();
-    //params.add(IFernflowerPreferences.BYTECODE_SOURCE_MAPPING);
-    //params.add("1");
-    //params.add(IFernflowerPreferences.DUMP_ORIGINAL_LINES);
-    //params.add("1");
 
     params.add(IFernflowerPreferences.RENAME_ENTITIES);
     params.add("1");
 
+    //params.add(IFernflowerPreferences.DECOMPILE_ASSERTIONS);
+    //params.add("0");
+    
     DecompilerTestFixture fixture;
     fixture = new DecompilerTestFixture();
     fixture.setUp(externalTempDir, params.toArray(new String[0]));
@@ -69,7 +68,13 @@ public class StdoutCompareTestHelper {
         Class<?> cl = Class.forName(className);
         meth = cl.getMethod("main", String[].class);
       }
-      catch (Exception e) {}
+      catch (Exception e) {
+        //write a skip file so we know we are skipping tests...
+        String outFileName = outputDir + "/" + className + ".skip.txt";
+        PrintStream out = new PrintStream(outFileName);
+        out.println(e);
+        out.close();
+      }
       if (meth != null) {
         PrintStream origOut = System.out;
         PrintStream newOut = null;
@@ -109,7 +114,7 @@ public class StdoutCompareTestHelper {
 
     List<File> javaFiles = collectFiles(stdoutTestsJavaRoot, ".java");
 
-    System.out.println("DEBUG: found this java files: " + javaFiles);
+    //System.out.println("DEBUG: found this java files: " + javaFiles);
 
     List<String> classNames = new ArrayList<String>();
     for(File f: javaFiles) {
@@ -119,7 +124,7 @@ public class StdoutCompareTestHelper {
 
       classNames.add(n);
     }
-    System.out.println("DEBUG: found this java names: " + classNames);
+    //System.out.println("DEBUG: found this java names: " + classNames);
     return classNames;
   }
 
@@ -131,7 +136,7 @@ public class StdoutCompareTestHelper {
 
 
   public static List<File> collectFiles(File dir, String endsWith) {
-    System.out.println("DEBUG: looking for " + endsWith + " files in: " + dir.getPath());
+    //System.out.println("DEBUG: looking for " + endsWith + " files in: " + dir.getPath());
     if (dir == null || !dir.isDirectory()) {
       throw new RuntimeException("ERROR: expecting directory");
     }
