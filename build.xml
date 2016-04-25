@@ -47,7 +47,7 @@
   </target>
 
 
-  <target name="test" depends="test-normal,test-stdout"/>
+  <target name="test" depends="test-stdout,test-normal"/>
 
   <target name="test-normal" depends="init,test-compile">
     <junit printsummary="true" failureproperty="tests.failed" fork="true">
@@ -60,9 +60,7 @@
     <fail if="tests.failed" message="Tests failed."/>
   </target>
 
-
-  <!--target name="test-stdout" depends="init,test-compile,test-stdout-prepare"-->
-  <target name="test-stdout" depends="init,test-stdout-prepare">
+  <target name="test-stdout" depends="init,test-compile,test-stdout-prepare">
     <junit printsummary="true" failureproperty="tests.failed" fork="true" >
       <classpath path="${test-out}:${out}"/>
       <classpath refid="junit"/>
@@ -72,11 +70,12 @@
         <fileset dir="${test-src}" includes="**/StdoutCompareTestRunner.java"/>
       </batchtest>
       
-      <!-- look at output -->
-      <formatter type="plain" usefile="false" /> <!-- to screen -->
-      <formatter type="plain" /> <!-- to file -->
+      <!-- look at output
+      <formatter type="plain" usefile="false" />
+      <formatter type="plain" />
+      -->
     </junit>
-    <!-- clean up (delete tmp dir with all the output -->
+    <!-- clean up (delete tmp dir with all the output) -->
     <delete includeemptydirs="true" failonerror="false">
       <fileset dir="${stdout-tests.temp.dir}"/>
     </delete>
