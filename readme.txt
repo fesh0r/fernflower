@@ -1,3 +1,10 @@
+0. How to build
+
+* linux: `./gradlew build`
+* windows `gradlew.bat build`
+
+jar file will be: build/libs/fernflower
+
 1. About the decompiler 
 
 Fernflower is the first actually working analytical decompiler for Java and 

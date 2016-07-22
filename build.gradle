@@ -1,0 +1,26 @@
+group="org.jetbrains.java.decompiler.main.decompiler"
+
+// Apply the java plugin to add support for Java
+apply plugin: 'java'
+apply plugin: 'application'
+
+
+repositories {
+  mavenLocal()
+  mavenCentral()  
+}
+
+jar {
+    manifest {
+        attributes 'Main-Class': 'org.jetbrains.java.decompiler.main.decompiler.ConsoleDecompiler'
+    }
+}
+
+mainClassName='org.jetbrains.java.decompiler.main.decompiler.ConsoleDecompiler'
+
+dependencies {
+    compile 'org.slf4j:slf4j-api:latest.release'
+    compile group: 'org.hamcrest', name: 'hamcrest-core', version: '1.3'
+    compile group: 'org.hamcrest', name: 'hamcrest-library', version: '1.3'
+    testCompile 'junit:junit:latest.release'
+}
