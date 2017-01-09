@@ -30,6 +30,15 @@ java -jar fernflower.jar -hes=0 -hdc=0 c:\Temp\binary\ -e=c:\Java\rt.jar c:\Temp
 
 java -jar fernflower.jar -dgs=1 c:\Temp\binary\library.jar c:\Temp\binary\Boot.class c:\Temp\source\
 
+to compile fernflower.jar
+
+````
+ant -f build.xml
+````
+
+from Idea [IdeaDecompiler](https://github.com/JetBrains/intellij-community/blob/master/plugins/java-decompiler/plugin/src/org/jetbrains/java/decompiler/IdeaDecompiler.kt)
+
+java -jar fernflower.jar -hdc=0 -dgs=1 -rsy=1 -rbr=1 -lit=1 -nls=1 -mpm=60 c:\Temp\binary\library.jar c:\Temp\source\
 
 4. Command line options
 
