@@ -8,7 +8,7 @@ fernflower.decompiler@gmail.com
 
 ## Licence
 
-Fernflower is licenced under the (http://www.apache.org/licenses/LICENSE-2.0)[Apache Licence Version 2.0]
+Fernflower is licenced under [http://www.apache.org/licenses/LICENSE-2.0)](Apache Licence Version 2.0)
 
 ## Running from command line
 
