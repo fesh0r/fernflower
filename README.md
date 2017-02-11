@@ -1,4 +1,4 @@
-1. About the decompiler 
+## About fernflower
 
 Fernflower is the first actually working analytical decompiler for Java and 
 probably for a high-level programming language in general. Naturally it is still 
@@ -6,12 +6,11 @@ under development, please send your bug reports and improvement suggestions at
 fernflower.decompiler@gmail.com
 
 
-2. License
+## Licence
 
-http://www.apache.org/licenses/LICENSE-2.0
+Fernflower is licenced under the (http://www.apache.org/licenses/LICENSE-2.0)[Apache Licence Version 2.0]
 
-
-3. Running from the command line
+## Running from command line
 
 java -jar fernflower.jar [-<option>=<value>]* [<source>]+ <destination>
 
@@ -24,14 +23,14 @@ java -jar fernflower.jar [-<option>=<value>]* [<source>]+ <destination>
 <destination>: destination directory 
 <option>,<value>: command line option with the corresponding value, see 4.
 
-Examples:
+### Examples
 
 java -jar fernflower.jar -hes=0 -hdc=0 c:\Temp\binary\ -e=c:\Java\rt.jar c:\Temp\source\
 
 java -jar fernflower.jar -dgs=1 c:\Temp\binary\library.jar c:\Temp\binary\Boot.class c:\Temp\source\
 
 
-4. Command line options
+## Command line options
 
 With the exception of mpm and urc the value of 1 means the option is activated, 0 - deactivated. Default 
 value, if any, is given between parentheses.
@@ -71,7 +70,7 @@ The default logging level is INFO. This value can be overwritten by setting the 
 log (INFO): possible values TRACE, INFO, WARN, ERROR
 
 
-5. Renaming identifiers
+## Renaming identifiers
 
 Some obfuscators give classes and their member elements short, meaningless and above all ambiguous names. Recompiling of such
 code leads to a great number of conflicts. Therefore it is advisable to let the decompiler rename elements in its turn, 
