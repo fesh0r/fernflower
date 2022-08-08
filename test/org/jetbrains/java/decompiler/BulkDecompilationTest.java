@@ -76,6 +76,9 @@ public class BulkDecompilationTest {
         ZipEntry entry = entries.nextElement();
         if (!entry.isDirectory()) {
           File file = new File(targetDir, entry.getName());
+          if (!file.toPath().normalize().startsWith(targetDir.toPath().normalize())) {
+            throw new RuntimeException("Bad zip entry");
+          }
           assertTrue(file.getParentFile().mkdirs() || file.getParentFile().isDirectory());
           try (InputStream in = zip.getInputStream(entry); OutputStream out = new FileOutputStream(file)) {
             InterpreterUtil.copyStream(in, out);
