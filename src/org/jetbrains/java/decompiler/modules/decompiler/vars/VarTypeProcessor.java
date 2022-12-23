@@ -39,13 +39,14 @@ public class VarTypeProcessor {
     setCatchBlockVariables(root);
     resetExprentTypes(graph);
     //noinspection StatementWithEmptyBody
-    while (!processVarTypes(graph)) ;
+    while (!processVarTypes(graph))
+      ;
   }
 
   private void setInitVariables() {
     boolean thisVar = !method.hasModifier(CodeConstants.ACC_STATIC);
     if (thisVar) {
-      StructClass currentClass = (StructClass)DecompilerContext.getProperty(DecompilerContext.CURRENT_CLASS);
+      StructClass currentClass = (StructClass) DecompilerContext.getProperty(DecompilerContext.CURRENT_CLASS);
       VarType classType = new VarType(CodeConstants.TYPE_OBJECT, 0, currentClass.qualifiedName);
       minExprentTypes.put(new VarVersionPair(0, 1), classType);
       maxExprentTypes.put(new VarVersionPair(0, 1), classType);
@@ -66,10 +67,9 @@ public class VarTypeProcessor {
       Statement statement = statements.removeFirst();
       List<VarExprent> catchVariables = null;
       if (statement.type == StatementType.CATCH_ALL) {
-        catchVariables = ((CatchAllStatement)statement).getVars();
-      }
-      else if (statement.type == StatementType.TRY_CATCH) {
-        catchVariables = ((CatchStatement)statement).getVars();
+        catchVariables = ((CatchAllStatement) statement).getVars();
+      } else if (statement.type == StatementType.TRY_CATCH) {
+        catchVariables = ((CatchStatement) statement).getVars();
       }
       if (catchVariables != null) {
         for (VarExprent catchVariable : catchVariables) {
@@ -83,10 +83,11 @@ public class VarTypeProcessor {
 
   private boolean checkTypeExprent(@NotNull Exprent currentExprent) {
     for (Exprent exprent : currentExprent.getAllExprents()) {
-      if (!checkTypeExprent(exprent)) return false;
+      if (!checkTypeExprent(exprent))
+        return false;
     }
     if (currentExprent.type == Exprent.EXPRENT_CONST) {
-      ConstExprent constExprent = (ConstExprent)currentExprent;
+      ConstExprent constExprent = (ConstExprent) currentExprent;
       if (constExprent.getConstType().getTypeFamily() <= CodeConstants.TYPE_FAMILY_INTEGER) { // boolean or integer
         VarVersionPair varVersion = new VarVersionPair(constExprent.id, -1);
         if (!minExprentTypes.containsKey(varVersion)) {
@@ -96,15 +97,16 @@ public class VarTypeProcessor {
     }
 
     CheckTypesResult exprentTypeBounds = currentExprent.checkExprTypeBounds();
-    if (exprentTypeBounds == null) return true;
+    if (exprentTypeBounds == null)
+      return true;
 
-    for (var entry : exprentTypeBounds.getMaxTypeExprents()) {
+    for (CheckTypesResult.ExprentTypePair entry : exprentTypeBounds.getMaxTypeExprents()) {
       if (entry.type.getTypeFamily() != CodeConstants.TYPE_FAMILY_OBJECT) {
         changeExprentType(entry.exprent, entry.type, false);
       }
     }
     boolean result = true;
-    for (var entry : exprentTypeBounds.getMinTypeExprents()) {
+    for (CheckTypesResult.ExprentTypePair entry : exprentTypeBounds.getMinTypeExprents()) {
       result &= changeExprentType(entry.exprent, entry.type, true);
     }
     return result;
@@ -116,11 +118,12 @@ public class VarTypeProcessor {
 
   private boolean changeExprentType(@NotNull Exprent exprent, @NotNull VarType newType, boolean checkMinExprentType) {
     if (exprent.type == Exprent.EXPRENT_CONST) {
-      ConstExprent constExprent = (ConstExprent)exprent;
+      ConstExprent constExprent = (ConstExprent) exprent;
       VarType constType = constExprent.getConstType();
-      if (newType.getTypeFamily() > CodeConstants.TYPE_FAMILY_INTEGER || constType.getTypeFamily() > CodeConstants.TYPE_FAMILY_INTEGER) return true;
+      if (newType.getTypeFamily() > CodeConstants.TYPE_FAMILY_INTEGER || constType.getTypeFamily() > CodeConstants.TYPE_FAMILY_INTEGER)
+        return true;
       if (newType.getTypeFamily() == CodeConstants.TYPE_FAMILY_INTEGER) {
-        VarType integerType = new ConstExprent((Integer)constExprent.getValue(), false, null).getConstType();
+        VarType integerType = new ConstExprent((Integer) constExprent.getValue(), false, null).getConstType();
         if (integerType.isStrictSuperset(newType)) {
           newType = integerType;
         }
@@ -128,21 +131,23 @@ public class VarTypeProcessor {
       return changeConstExprentType(new VarVersionPair(exprent.id, -1), exprent, newType, checkMinExprentType);
     }
     if (exprent.type == Exprent.EXPRENT_VAR) {
-      return changeConstExprentType(new VarVersionPair((VarExprent)exprent), exprent, newType, checkMinExprentType);
+      return changeConstExprentType(new VarVersionPair((VarExprent) exprent), exprent, newType, checkMinExprentType);
     }
     if (exprent.type == Exprent.EXPRENT_ASSIGNMENT) {
-      return changeExprentType(((AssignmentExprent)exprent).getRight(), newType, checkMinExprentType);
+      return changeExprentType(((AssignmentExprent) exprent).getRight(), newType, checkMinExprentType);
     }
     if (exprent.type == Exprent.EXPRENT_FUNCTION) {
-      FunctionExprent functionExprent = (FunctionExprent)exprent;
+      FunctionExprent functionExprent = (FunctionExprent) exprent;
       switch (functionExprent.getFuncType()) {
-        case FunctionExprent.FUNCTION_IIF -> {   // FIXME:
+        case FunctionExprent.FUNCTION_IIF: {   // FIXME:
           return changeExprentType(functionExprent.getLstOperands().get(1), newType, checkMinExprentType) &
-                 changeExprentType(functionExprent.getLstOperands().get(2), newType, checkMinExprentType);
+            changeExprentType(functionExprent.getLstOperands().get(2), newType, checkMinExprentType);
         }
-        case FunctionExprent.FUNCTION_AND, FunctionExprent.FUNCTION_OR, FunctionExprent.FUNCTION_XOR -> {
+        case FunctionExprent.FUNCTION_AND:
+        case FunctionExprent.FUNCTION_OR:
+        case FunctionExprent.FUNCTION_XOR: {
           return changeExprentType(functionExprent.getLstOperands().get(0), newType, checkMinExprentType) &
-                 changeExprentType(functionExprent.getLstOperands().get(1), newType, checkMinExprentType);
+            changeExprentType(functionExprent.getLstOperands().get(1), newType, checkMinExprentType);
         }
       }
     }
@@ -158,29 +163,25 @@ public class VarTypeProcessor {
       VarType newMinType;
       if (currentMinType == null || newType.getTypeFamily() > currentMinType.getTypeFamily()) {
         newMinType = newType;
-      }
-      else if (newType.getTypeFamily() < currentMinType.getTypeFamily()) {
+      } else if (newType.getTypeFamily() < currentMinType.getTypeFamily()) {
         return true;
-      }
-      else {
+      } else {
         newMinType = VarType.getCommonSupertype(currentMinType, newType);
       }
       minExprentTypes.put(varVersion, newMinType);
       if (exprent.type == Exprent.EXPRENT_CONST) {
-        ((ConstExprent)exprent).setConstType(newMinType);
+        ((ConstExprent) exprent).setConstType(newMinType);
       }
       return currentMinType == null ||
-             (newMinType.getTypeFamily() <= currentMinType.getTypeFamily() && !newMinType.isStrictSuperset(currentMinType));
+        (newMinType.getTypeFamily() <= currentMinType.getTypeFamily() && !newMinType.isStrictSuperset(currentMinType));
     }
     VarType currentMaxType = maxExprentTypes.get(varVersion);
     VarType newMaxType;
     if (currentMaxType == null || newType.getTypeFamily() < currentMaxType.getTypeFamily()) {
       newMaxType = newType;
-    }
-    else if (newType.getTypeFamily() > currentMaxType.getTypeFamily()) {
+    } else if (newType.getTypeFamily() > currentMaxType.getTypeFamily()) {
       return true;
-    }
-    else {
+    } else {
       newMaxType = VarType.getCommonMinType(currentMaxType, newType);
     }
     maxExprentTypes.put(varVersion, newMaxType);
@@ -193,10 +194,9 @@ public class VarTypeProcessor {
       allExprents.add(currExprent);
       for (Exprent exprent : allExprents) {
         if (exprent.type == Exprent.EXPRENT_VAR) {
-          ((VarExprent)exprent).setVarType(VarType.VARTYPE_UNKNOWN);
-        }
-        else if (exprent.type == Exprent.EXPRENT_CONST) {
-          ConstExprent constExprent = (ConstExprent)exprent;
+          ((VarExprent) exprent).setVarType(VarType.VARTYPE_UNKNOWN);
+        } else if (exprent.type == Exprent.EXPRENT_CONST) {
+          ConstExprent constExprent = (ConstExprent) exprent;
           if (constExprent.getConstType().getTypeFamily() == CodeConstants.TYPE_FAMILY_INTEGER) {
             constExprent.setConstType(new ConstExprent(constExprent.getIntValue(), constExprent.isBoolPermitted(), null).getConstType());
           }

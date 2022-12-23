@@ -127,7 +127,7 @@ public class SSAUConstructorSparseEx {
       }
 
       boolean this_updated = !mapsEqual(varmaparr[0], outVarVersions.get(node.id))
-                             || (outNegVarVersions.containsKey(node.id) && !mapsEqual(varmaparr[1], outNegVarVersions.get(node.id)));
+        || (outNegVarVersions.containsKey(node.id) && !mapsEqual(varmaparr[1], outNegVarVersions.get(node.id)));
 
       if (this_updated) {
 
@@ -155,26 +155,26 @@ public class SSAUConstructorSparseEx {
     boolean finished = false;
 
     switch (expr.type) {
-      case Exprent.EXPRENT_ASSIGNMENT -> {
-        AssignmentExprent assexpr = (AssignmentExprent)expr;
+      case Exprent.EXPRENT_ASSIGNMENT: {
+        AssignmentExprent assexpr = (AssignmentExprent) expr;
         if (assexpr.getCondType() == AssignmentExprent.CONDITION_NONE) {
           Exprent dest = assexpr.getLeft();
           if (dest.type == Exprent.EXPRENT_VAR) {
-            varassign = (VarExprent)dest;
+            varassign = (VarExprent) dest;
           }
         }
       }
-      case Exprent.EXPRENT_FUNCTION -> {
-        FunctionExprent func = (FunctionExprent)expr;
+      break;
+      case Exprent.EXPRENT_FUNCTION: {
+        FunctionExprent func = (FunctionExprent) expr;
         switch (func.getFuncType()) {
-          case FunctionExprent.FUNCTION_IIF -> {
+          case FunctionExprent.FUNCTION_IIF: {
             processExprent(func.getLstOperands().get(0), varmaparr, stat, calcLiveVars);
 
             SFormsFastMapDirect varmapFalse;
             if (varmaparr[1] == null) {
               varmapFalse = new SFormsFastMapDirect(varmaparr[0]);
-            }
-            else {
+            } else {
               varmapFalse = varmaparr[1];
               varmaparr[1] = null;
             }
@@ -189,7 +189,8 @@ public class SSAUConstructorSparseEx {
 
             finished = true;
           }
-          case FunctionExprent.FUNCTION_CADD -> {
+          break;
+          case FunctionExprent.FUNCTION_CADD: {
             processExprent(func.getLstOperands().get(0), varmaparr, stat, calcLiveVars);
 
             SFormsFastMapDirect[] varmaparrAnd = new SFormsFastMapDirect[]{new SFormsFastMapDirect(varmaparr[0]), null};
@@ -203,7 +204,8 @@ public class SSAUConstructorSparseEx {
 
             finished = true;
           }
-          case FunctionExprent.FUNCTION_COR -> {
+          break;
+          case FunctionExprent.FUNCTION_COR: {
             processExprent(func.getLstOperands().get(0), varmaparr, stat, calcLiveVars);
 
             SFormsFastMapDirect[] varmaparrOr =
@@ -218,7 +220,9 @@ public class SSAUConstructorSparseEx {
 
             finished = true;
           }
+          break;
         }
+        break;
       }
     }
 
@@ -240,8 +244,7 @@ public class SSAUConstructorSparseEx {
       int index;
       if (mapFieldVars.containsKey(expr.id)) {
         index = mapFieldVars.get(expr.id);
-      }
-      else {
+      } else {
         index = fieldvarcounter--;
         mapFieldVars.put(expr.id, index);
 
@@ -250,11 +253,10 @@ public class SSAUConstructorSparseEx {
       }
 
       setCurrentVar(varmap, index, 1);
-    }
-    else if (expr.type == Exprent.EXPRENT_INVOCATION ||
-             (expr.type == Exprent.EXPRENT_ASSIGNMENT && ((AssignmentExprent)expr).getLeft().type == Exprent.EXPRENT_FIELD) ||
-             (expr.type == Exprent.EXPRENT_NEW && ((NewExprent)expr).getNewType().getType() == CodeConstants.TYPE_OBJECT) ||
-             expr.type == Exprent.EXPRENT_FUNCTION) {
+    } else if (expr.type == Exprent.EXPRENT_INVOCATION ||
+      (expr.type == Exprent.EXPRENT_ASSIGNMENT && ((AssignmentExprent) expr).getLeft().type == Exprent.EXPRENT_FIELD) ||
+      (expr.type == Exprent.EXPRENT_NEW && ((NewExprent) expr).getNewType().getType() == CodeConstants.TYPE_OBJECT) ||
+      expr.type == Exprent.EXPRENT_FUNCTION) {
 
       boolean ismmpp = true;
 
@@ -262,7 +264,7 @@ public class SSAUConstructorSparseEx {
 
         ismmpp = false;
 
-        FunctionExprent fexpr = (FunctionExprent)expr;
+        FunctionExprent fexpr = (FunctionExprent) expr;
         if (fexpr.getFuncType() >= FunctionExprent.FUNCTION_IMM && fexpr.getFuncType() <= FunctionExprent.FUNCTION_PPI) {
           if (fexpr.getLstOperands().get(0).type == Exprent.EXPRENT_FIELD) {
             ismmpp = true;
@@ -291,21 +293,22 @@ public class SSAUConstructorSparseEx {
         ssuversions.createNode(new VarVersionPair(varindex, nextver));
 
         setCurrentVar(varmap, varindex, nextver);
-      }
-      else {
+      } else {
         if (calcLiveVars) {
           varMapToGraph(new VarVersionPair(varindex.intValue(), varassign.getVersion()), varmap);
         }
         setCurrentVar(varmap, varindex, varassign.getVersion());
       }
-    }
-    else if (expr.type == Exprent.EXPRENT_FUNCTION) { // MM or PP function
-      FunctionExprent func = (FunctionExprent)expr;
+    } else if (expr.type == Exprent.EXPRENT_FUNCTION) { // MM or PP function
+      FunctionExprent func = (FunctionExprent) expr;
 
       switch (func.getFuncType()) {
-        case FunctionExprent.FUNCTION_IMM, FunctionExprent.FUNCTION_MMI, FunctionExprent.FUNCTION_IPP, FunctionExprent.FUNCTION_PPI -> {
+        case FunctionExprent.FUNCTION_IMM:
+        case FunctionExprent.FUNCTION_MMI:
+        case FunctionExprent.FUNCTION_IPP:
+        case FunctionExprent.FUNCTION_PPI: {
           if (func.getLstOperands().get(0).type == Exprent.EXPRENT_VAR) {
-            VarExprent var = (VarExprent)func.getLstOperands().get(0);
+            VarExprent var = (VarExprent) func.getLstOperands().get(0);
             Integer varindex = var.getIndex();
             VarVersionPair varpaar = new VarVersionPair(varindex.intValue(), var.getVersion());
 
@@ -323,8 +326,7 @@ public class SSAUConstructorSparseEx {
               FastSparseSet<Integer> vers = factory.spawnEmptySet();
               if (vernode.predecessors.size() == 1) {
                 vers.add(vernode.predecessors.iterator().next().source.version);
-              }
-              else {
+              } else {
                 for (VarVersionEdge edge : vernode.predecessors) {
                   vers.add(edge.source.predecessors.iterator().next().source.version);
                 }
@@ -339,11 +341,11 @@ public class SSAUConstructorSparseEx {
             setCurrentVar(varmap, varindex, var.getVersion());
           }
         }
+        break;
       }
-    }
-    else if (expr.type == Exprent.EXPRENT_VAR) {
+    } else if (expr.type == Exprent.EXPRENT_VAR) {
 
-      VarExprent vardest = (VarExprent)expr;
+      VarExprent vardest = (VarExprent) expr;
 
       Integer varindex = vardest.getIndex();
       Integer current_vers = vardest.getVersion();
@@ -357,8 +359,7 @@ public class SSAUConstructorSparseEx {
             varMapToGraph(new VarVersionPair(varindex, current_vers), varmap);
           }
           setCurrentVar(varmap, varindex, current_vers);
-        }
-        else {
+        } else {
           // split last version
           Integer usever = getNextFreeVersion(varindex, stat);
 
@@ -374,16 +375,14 @@ public class SSAUConstructorSparseEx {
           prenode.addSuccessor(edge);
           usenode.addPredecessor(edge);
         }
-      }
-      else if (cardinality == 2) { // size > 1
+      } else if (cardinality == 2) { // size > 1
 
         if (current_vers != 0) {
           if (calcLiveVars) {
             varMapToGraph(new VarVersionPair(varindex, current_vers), varmap);
           }
           setCurrentVar(varmap, varindex, current_vers);
-        }
-        else {
+        } else {
           // split version
           Integer usever = getNextFreeVersion(varindex, stat);
           // set version
@@ -417,15 +416,13 @@ public class SSAUConstructorSparseEx {
       VarVersionEdge edge = lstPreds.get(0);
       edge.source.removeSuccessor(edge);
       phinode.removePredecessor(edge);
-    }
-    else {
+    } else {
       for (VarVersionEdge edge : lstPreds) {
         int verssrc = edge.source.predecessors.iterator().next().source.version;
         if (!vers.contains(verssrc) && verssrc != ppvers) {
           edge.source.removeSuccessor(edge);
           phinode.removePredecessor(edge);
-        }
-        else {
+        } else {
           versCopy.remove(verssrc);
         }
       }
@@ -474,8 +471,7 @@ public class SSAUConstructorSparseEx {
 
     if (nextver == null) {
       nextver = 1;
-    }
-    else {
+    } else {
       nextver++;
     }
     lastversion.put(var, nextver);
@@ -500,8 +496,7 @@ public class SSAUConstructorSparseEx {
       SFormsFastMapDirect mapOut = getFilteredOutMap(node.id, pred.id, dgraph, node.id);
       if (mapNew.isEmpty()) {
         mapNew = mapOut.getCopy();
-      }
-      else {
+      } else {
         mergeMaps(mapNew, mapOut);
       }
     }
@@ -510,8 +505,7 @@ public class SSAUConstructorSparseEx {
       SFormsFastMapDirect mapExtra = extraVarVersions.get(node.id);
       if (mapNew.isEmpty()) {
         mapNew = mapExtra.getCopy();
-      }
-      else {
+      } else {
         mergeMaps(mapNew, mapExtra);
       }
     }
@@ -529,8 +523,7 @@ public class SSAUConstructorSparseEx {
       if (outNegVarVersions.containsKey(predid)) {
         mapNew = outNegVarVersions.get(predid).getCopy();
       }
-    }
-    else if (outVarVersions.containsKey(predid)) {
+    } else if (outVarVersions.containsKey(predid)) {
       mapNew = outVarVersions.get(predid).getCopy();
     }
 
@@ -558,12 +551,10 @@ public class SSAUConstructorSparseEx {
         if (recFinally) {
           // recursion
           map = getFilteredOutMap(finwrap.entry, finwrap.source, dgraph, destid);
-        }
-        else {
+        } else {
           if (finwrap.entry.equals(dgraph.mapNegIfBranch.get(finwrap.source))) {
             map = outNegVarVersions.get(finwrap.source);
-          }
-          else {
+          } else {
             map = outVarVersions.get(finwrap.source);
           }
         }
@@ -573,21 +564,18 @@ public class SSAUConstructorSparseEx {
 
         if (recFinally) {
           isFalsePath = !finwrap.destination.equals(nodeid);
-        }
-        else {
+        } else {
           isFalsePath = !setLongPathWrapper.contains(destid + "##" + finwrap.source);
         }
 
         if (isFalsePath) {
           mapNewTemp.complement(map);
-        }
-        else {
+        } else {
           if (mapTrueSource.isEmpty()) {
             if (map != null) {
               mapTrueSource = map.getCopy();
             }
-          }
-          else {
+          } else {
             mergeMaps(mapTrueSource, map);
           }
         }
@@ -596,8 +584,7 @@ public class SSAUConstructorSparseEx {
       if (isExceptionMonitorExit) {
 
         mapNew = mapTrueSource;
-      }
-      else {
+      } else {
 
         mapNewTemp.union(mapTrueSource);
         mapNew.intersection(mapNewTemp);
@@ -668,8 +655,7 @@ public class SSAUConstructorSparseEx {
 
     if (map1 == null) {
       return map2 == null;
-    }
-    else if (map2 == null) {
+    } else if (map2 == null) {
       return false;
     }
 
@@ -698,13 +684,13 @@ public class SSAUConstructorSparseEx {
     SFormsFastMapDirect map;
 
     switch (stat.type) {
-      case CATCH_ALL, TRY_CATCH -> {
+      case CATCH_ALL:
+      case TRY_CATCH: {
         List<VarExprent> lstVars;
         if (stat.type == StatementType.CATCH_ALL) {
-          lstVars = ((CatchAllStatement)stat).getVars();
-        }
-        else {
-          lstVars = ((CatchStatement)stat).getVars();
+          lstVars = ((CatchAllStatement) stat).getVars();
+        } else {
+          lstVars = ((CatchStatement) stat).getVars();
         }
 
         for (int i = 1; i < stat.getStats().size(); i++) {
@@ -746,12 +732,10 @@ public class SSAUConstructorSparseEx {
       if (thisvar) {
         if (i == 0) {
           varindex++;
-        }
-        else {
+        } else {
           varindex += md.params[i - 1].getStackSize();
         }
-      }
-      else {
+      } else {
         varindex += md.params[i].getStackSize();
       }
     }
@@ -769,13 +753,12 @@ public class SSAUConstructorSparseEx {
       }
 
       if (parent.type == StatementType.CATCH_ALL ||
-          parent.type == StatementType.TRY_CATCH) {
+        parent.type == StatementType.TRY_CATCH) {
         if (parent.getFirst() == stat) {
           return parent.id;
         }
-      }
-      else if (parent.type == StatementType.SYNCHRONIZED) {
-        if (((SynchronizedStatement)parent).getBody() == stat) {
+      } else if (parent.type == StatementType.SYNCHRONIZED) {
+        if (((SynchronizedStatement) parent).getBody() == stat) {
           return parent.id;
         }
       }

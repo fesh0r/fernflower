@@ -59,24 +59,25 @@ public final class IfStatement extends Statement {
     List<StatEdge> lstHeadSuccs = head.getSuccessorEdges(EdgeType.DIRECT_ALL);
 
     switch (regedges) {
-      case 0 -> {
+      case 0: {
         ifstat = null;
         elsestat = null;
       }
-      case 1 -> {
+      break;
+      case 1: {
         ifstat = null;
         elsestat = null;
 
         StatEdge edgeif = lstHeadSuccs.get(1);
         if (edgeif.getType() != EdgeType.REGULAR) {
           post = lstHeadSuccs.get(0).getDestination();
-        }
-        else {
+        } else {
           post = edgeif.getDestination();
           negated = true;
         }
       }
-      case 2 -> {
+      break;
+      case 2: {
         elsestat = lstHeadSuccs.get(0).getDestination();
         ifstat = lstHeadSuccs.get(1).getDestination();
 
@@ -85,15 +86,12 @@ public final class IfStatement extends Statement {
 
         if (ifstat.getPredecessorEdges(EdgeType.REGULAR).size() > 1 || lstSucc.size() > 1) {
           post = ifstat;
-        }
-        else if (elsestat.getPredecessorEdges(EdgeType.REGULAR).size() > 1 || lstSucc1.size() > 1) {
+        } else if (elsestat.getPredecessorEdges(EdgeType.REGULAR).size() > 1 || lstSucc1.size() > 1) {
           post = elsestat;
-        }
-        else {
+        } else {
           if (lstSucc.size() == 0) {
             post = elsestat;
-          }
-          else if (lstSucc1.size() == 0) {
+          } else if (lstSucc1.size() == 0) {
             post = ifstat;
           }
         }
@@ -102,16 +100,13 @@ public final class IfStatement extends Statement {
           if (elsestat != post) {
             ifstat = elsestat;
             negated = true;
-          }
-          else {
+          } else {
             ifstat = null;
           }
           elsestat = null;
-        }
-        else if (elsestat == post) {
+        } else if (elsestat == post) {
           elsestat = null;
-        }
-        else {
+        } else {
           post = postst;
         }
 
@@ -119,6 +114,7 @@ public final class IfStatement extends Statement {
           regedges = 1;  // if without else
         }
       }
+      break;
     }
 
     ifedge = lstHeadSuccs.get(negated ? 0 : 1);
@@ -132,8 +128,7 @@ public final class IfStatement extends Statement {
         head.removeSuccessor(edge);
         edge.setSource(this);
         this.addSuccessor(edge);
-      }
-      else if (regedges == 1) {
+      } else if (regedges == 1) {
         StatEdge edge = lstHeadSuccs.get(negated ? 1 : 0);
         head.removeSuccessor(edge);
       }
@@ -210,8 +205,7 @@ public final class IfStatement extends Statement {
         if (ifedge.getType() == EdgeType.BREAK) {
           // break
           buf.appendIndent(indent + 1).append("break");
-        }
-        else {
+        } else {
           // continue
           buf.appendIndent(indent + 1).append("continue");
         }
@@ -220,12 +214,11 @@ public final class IfStatement extends Statement {
           buf.append(" label").append(Integer.toString(ifedge.closure.id));
         }
       }
-      if(semicolon) {
+      if (semicolon) {
         buf.append(";").appendLineSeparator();
         tracer.incrementCurrentSourceLine();
       }
-    }
-    else {
+    } else {
       buf.append(ExprProcessor.jmpWrapper(ifstat, indent + 1, true, tracer));
     }
 
@@ -233,10 +226,10 @@ public final class IfStatement extends Statement {
 
     if (elsestat != null) {
       if (elsestat.type == StatementType.IF
-          && elsestat.varDefinitions.isEmpty() && elsestat.getFirst().getExprents().isEmpty() &&
-          !elsestat.isLabeled() &&
-          (elsestat.getSuccessorEdges(EdgeType.DIRECT_ALL).isEmpty()
-           || !elsestat.getSuccessorEdges(EdgeType.DIRECT_ALL).get(0).explicit)) { // else if
+        && elsestat.varDefinitions.isEmpty() && elsestat.getFirst().getExprents().isEmpty() &&
+        !elsestat.isLabeled() &&
+        (elsestat.getSuccessorEdges(EdgeType.DIRECT_ALL).isEmpty()
+          || !elsestat.getSuccessorEdges(EdgeType.DIRECT_ALL).get(0).explicit)) { // else if
         buf.appendIndent(indent).append("} else ");
 
         TextBuffer content = ExprProcessor.jmpWrapper(elsestat, indent, false, tracer);
@@ -244,8 +237,7 @@ public final class IfStatement extends Statement {
         buf.append(content);
 
         elseif = true;
-      }
-      else {
+      } else {
         BytecodeMappingTracer else_tracer = new BytecodeMappingTracer(tracer.getCurrentSourceLine() + 1);
         TextBuffer content = ExprProcessor.jmpWrapper(elsestat, indent + 1, false, else_tracer);
 
@@ -271,10 +263,10 @@ public final class IfStatement extends Statement {
   @Override
   public void initExprents() {
 
-    IfExprent ifexpr = (IfExprent)first.getExprents().remove(first.getExprents().size() - 1);
+    IfExprent ifexpr = (IfExprent) first.getExprents().remove(first.getExprents().size() - 1);
 
     if (negated) {
-      ifexpr = (IfExprent)ifexpr.copy();
+      ifexpr = (IfExprent) ifexpr.copy();
       ifexpr.negateIf();
     }
 
@@ -315,15 +307,13 @@ public final class IfStatement extends Statement {
     if (iftype == IFTYPE_IF) {
       ifedge = lstSuccs.get(0);
       elseedge = null;
-    }
-    else {
+    } else {
       StatEdge edge0 = lstSuccs.get(0);
       StatEdge edge1 = lstSuccs.get(1);
       if (edge0.getDestination() == ifstat) {
         ifedge = edge0;
         elseedge = edge1;
-      }
-      else {
+      } else {
         ifedge = edge1;
         elseedge = edge0;
       }
@@ -390,7 +380,7 @@ public final class IfStatement extends Statement {
   }
 
   public IfExprent getHeadexprent() {
-    return (IfExprent)headexprent.get(0);
+    return (IfExprent) headexprent.get(0);
   }
 
   public void setElseEdge(StatEdge elseedge) {
@@ -421,7 +411,7 @@ public final class IfStatement extends Statement {
     }
 
     if (matchNode.getType() == MatchNode.MATCHNODE_EXPRENT) {
-      String position = (String)matchNode.getRuleValue(MatchProperties.EXPRENT_POSITION);
+      String position = (String) matchNode.getRuleValue(MatchProperties.EXPRENT_POSITION);
       if ("head".equals(position)) {
         return getHeadexprent();
       }
@@ -436,7 +426,7 @@ public final class IfStatement extends Statement {
       return false;
     }
 
-    Integer type = (Integer)matchNode.getRuleValue(MatchProperties.STATEMENT_IFTYPE);
+    Integer type = (Integer) matchNode.getRuleValue(MatchProperties.STATEMENT_IFTYPE);
     return type == null || this.iftype == type;
   }
 }

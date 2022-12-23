@@ -75,10 +75,9 @@ public class ClassesProcessor implements CodeConstants {
               String savedName = mapNewSimpleNames.get(innerName);
               if (savedName != null) {
                 simpleName = savedName;
-              }
-              else if (simpleName != null &&
-                       renamer != null &&
-                       renamer.toBeRenamed(IIdentifierRenamer.Type.ELEMENT_CLASS, simpleName, null, null)) {
+              } else if (simpleName != null &&
+                renamer != null &&
+                renamer.toBeRenamed(IIdentifierRenamer.Type.ELEMENT_CLASS, simpleName, null, null)) {
                 simpleName = renamer.getNextClassName(innerName, simpleName);
                 mapNewSimpleNames.put(innerName, simpleName);
               }
@@ -102,8 +101,7 @@ public class ClassesProcessor implements CodeConstants {
                 Inner existingRec = mapInnerClasses.get(innerName);
                 if (existingRec == null) {
                   mapInnerClasses.put(innerName, rec);
-                }
-                else if (!Inner.equal(existingRec, rec)) {
+                } else if (!Inner.equal(existingRec, rec)) {
                   String message = "Inconsistent inner class entries for " + innerName + "!";
                   DecompilerContext.getLogger().writeMessage(message, IFernflowerLogger.Severity.WARN);
                 }
@@ -126,11 +124,12 @@ public class ClassesProcessor implements CodeConstants {
     // set non-sealed if class extends or implements a sealed class and is not final or sealed itself
     for (ClassNode clazz : mapRootClasses.values()) {
       if (clazz.classStruct.hasSealedClassesSupport() &&
-          (clazz.access & CodeConstants.ACC_FINAL) == 0 &&
-          clazz.classStruct.getPermittedSubclasses() == null) {
+        (clazz.access & CodeConstants.ACC_FINAL) == 0 &&
+        clazz.classStruct.getPermittedSubclasses() == null) {
         List<String> qualifiedSealedSuperNames = new ArrayList<>(Arrays.asList(clazz.classStruct.getInterfaceNames()));
         PrimitiveConstant superConst = clazz.classStruct.superClass;
-        if (superConst != null) qualifiedSealedSuperNames.add(superConst.getString());
+        if (superConst != null)
+          qualifiedSealedSuperNames.add(superConst.getString());
         clazz.setNonSealed(
           qualifiedSealedSuperNames.stream()
             .map(mapRootClasses::get)
@@ -186,7 +185,7 @@ public class ClassesProcessor implements CodeConstants {
                 Inner rec = mapInnerClasses.get(nestedClass);
 
                 //if ((Integer)arr[2] == ClassNode.CLASS_MEMBER) {
-                  // FIXME: check for consistent naming
+                // FIXME: check for consistent naming
                 //}
 
                 nestedNode.simpleName = rec.simpleName;
@@ -206,12 +205,10 @@ public class ClassesProcessor implements CodeConstants {
                   int[] interfaces = cl.getInterfaces();
                   if (interfaces.length > 0) {
                     nestedNode.anonymousClassType = new VarType(cl.getInterface(0), true);
-                  }
-                  else {
+                  } else {
                     nestedNode.anonymousClassType = new VarType(cl.superClass.getString(), true);
                   }
-                }
-                else if (nestedNode.type == ClassNode.CLASS_LOCAL) {
+                } else if (nestedNode.type == ClassNode.CLASS_LOCAL) {
                   // only abstract and final are permitted (a common compiler bug)
                   nestedNode.access &= (CodeConstants.ACC_ABSTRACT | CodeConstants.ACC_FINAL);
                 }
@@ -240,8 +237,7 @@ public class ClassesProcessor implements CodeConstants {
         DecompilerContext.getLogger().writeMessage(message, IFernflowerLogger.Severity.WARN);
         return false;
       }
-    }
-    else if (cl.superClass == null) { // neither interface nor super class defined
+    } else if (cl.superClass == null) { // neither interface nor super class defined
       String message = "Inconsistent anonymous class definition: '" + cl.qualifiedName + "'. Neither interface nor super class defined.";
       DecompilerContext.getLogger().writeMessage(message, IFernflowerLogger.Severity.WARN);
       return false;
@@ -273,32 +269,39 @@ public class ClassesProcessor implements CodeConstants {
           for (int i = 0; i < len; i++) {
             Instruction instr = seq.getInstr(i);
             switch (instr.opcode) {
-              case opc_checkcast, opc_instanceof -> {
+              case opc_checkcast:
+              case opc_instanceof: {
                 if (cl.qualifiedName.equals(pool.getPrimitiveConstant(instr.operand(0)).getString())) {
                   refCounter++;
                   refNotNew = true;
                 }
               }
-              case opc_new, opc_anewarray, opc_multianewarray -> {
+              break;
+              case opc_new:
+              case opc_anewarray:
+              case opc_multianewarray: {
                 if (cl.qualifiedName.equals(pool.getPrimitiveConstant(instr.operand(0)).getString())) {
                   refCounter++;
                 }
               }
-              case opc_getstatic, opc_putstatic -> {
+              break;
+
+              case opc_getstatic:
+              case opc_putstatic: {
                 if (cl.qualifiedName.equals(pool.getLinkConstant(instr.operand(0)).classname)) {
                   refCounter++;
                   refNotNew = true;
                 }
               }
+              break;
             }
           }
         }
 
         mt.releaseResources();
-      }
-      catch (IOException ex) {
+      } catch (IOException ex) {
         String message = "Could not read method while checking anonymous class definition: '" + enclosingCl.qualifiedName + "', '" +
-                         InterpreterUtil.makeUniqueKey(mt.getName(), mt.getDescriptor()) + "'";
+          InterpreterUtil.makeUniqueKey(mt.getName(), mt.getDescriptor()) + "'";
         DecompilerContext.getLogger().writeMessage(message, IFernflowerLogger.Severity.WARN);
         return false;
       }
@@ -331,16 +334,14 @@ public class ClassesProcessor implements CodeConstants {
         ClassWriter.packageInfoToJava(cl, buffer);
 
         importCollector.writeImports(buffer, false);
-      }
-      else if (moduleInfo) {
+      } else if (moduleInfo) {
         TextBuffer moduleBuffer = new TextBuffer(AVERAGE_CLASS_SIZE);
         ClassWriter.moduleInfoToJava(cl, moduleBuffer);
 
         importCollector.writeImports(buffer, true);
 
         buffer.append(moduleBuffer);
-      }
-      else {
+      } else {
         new LambdaProcessor().processClass(root);
 
         // add simple class names to implicit import
@@ -380,8 +381,7 @@ public class ClassesProcessor implements CodeConstants {
           }
         }
       }
-    }
-    finally {
+    } finally {
       destroyWrappers(root);
       DecompilerContext.getLogger().endReadingClass();
     }

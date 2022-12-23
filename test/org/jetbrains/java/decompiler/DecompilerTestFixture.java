@@ -86,7 +86,7 @@ public class DecompilerTestFixture {
   }
 
   private static void deleteRecursively(Path file) throws IOException {
-    Files.walkFileTree(file, new SimpleFileVisitor<>() {
+    Files.walkFileTree(file, new SimpleFileVisitor<Path>() {
       @Override
       public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
         Files.delete(file);
@@ -104,7 +104,7 @@ public class DecompilerTestFixture {
   public static void assertFilesEqual(Path expected, Path actual) {
     if (Files.isDirectory(expected)) {
       try {
-        Files.walkFileTree(expected, new SimpleFileVisitor<>() {
+        Files.walkFileTree(expected, new SimpleFileVisitor<Path>() {
           @Override
           public FileVisitResult visitFile(Path expectedFile, BasicFileAttributes attrs) {
             Path actualFile = actual.resolve(expected.relativize(expectedFile));

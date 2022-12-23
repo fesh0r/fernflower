@@ -19,7 +19,8 @@ import static org.jetbrains.java.decompiler.modules.decompiler.StatEdge.EdgeDire
 
 public final class MergeHelper {
   public static void enhanceLoops(Statement root) {
-    while (enhanceLoopsRec(root)) /**/;
+    while (enhanceLoopsRec(root)) /**/
+      ;
     SequenceHelper.condenseSequences(root);
   }
 
@@ -33,7 +34,7 @@ public final class MergeHelper {
     }
 
     if (stat.type == StatementType.DO) {
-      res |= enhanceLoop((DoStatement)stat);
+      res |= enhanceLoop((DoStatement) stat);
     }
 
     return res;
@@ -43,19 +44,20 @@ public final class MergeHelper {
     LoopType oldLoop = stat.getLoopType();
 
     switch (oldLoop) {
-      case DO -> {
+      case DO: {
 
         // identify a while loop
         if (matchWhile(stat)) {
           // identify a for loop - subtype of while
           matchFor(stat);
-        }
-        else {
+        } else {
           // identify a do{}while loop
           matchDoWhile(stat);
         }
       }
-      case WHILE -> matchFor(stat);
+      break;
+      case WHILE:
+        matchFor(stat);
     }
 
     return (stat.getLoopType() != oldLoop);
@@ -69,15 +71,15 @@ public final class MergeHelper {
     }
 
     if (last.type == StatementType.IF) {
-      IfStatement lastif = (IfStatement)last;
+      IfStatement lastif = (IfStatement) last;
       if (lastif.iftype == IfStatement.IFTYPE_IF && lastif.getIfstat() == null) {
         StatEdge ifedge = lastif.getIfEdge();
         StatEdge elseedge = lastif.getAllSuccessorEdges().get(0);
 
         if ((ifedge.getType() == EdgeType.BREAK && elseedge.getType() == EdgeType.CONTINUE && elseedge.closure == stat
-             && isDirectPath(stat, ifedge.getDestination())) ||
-            (ifedge.getType() == EdgeType.CONTINUE && elseedge.getType() == EdgeType.BREAK && ifedge.closure == stat
-             && isDirectPath(stat, elseedge.getDestination()))) {
+          && isDirectPath(stat, ifedge.getDestination())) ||
+          (ifedge.getType() == EdgeType.CONTINUE && elseedge.getType() == EdgeType.BREAK && ifedge.closure == stat
+            && isDirectPath(stat, elseedge.getDestination()))) {
 
           Set<Statement> set = stat.getNeighboursSet(EdgeType.CONTINUE, EdgeDirection.BACKWARD);
           set.remove(last);
@@ -88,7 +90,7 @@ public final class MergeHelper {
 
           stat.setLoopType(LoopType.DO_WHILE);
 
-          IfExprent ifexpr = (IfExprent)lastif.getHeadexprent().copy();
+          IfExprent ifexpr = (IfExprent) lastif.getHeadexprent().copy();
           if (ifedge.getType() == EdgeType.BREAK) {
             ifexpr.negateIf();
           }
@@ -99,8 +101,7 @@ public final class MergeHelper {
           // remove empty if
           if (lastif.getFirst().getExprents().isEmpty()) {
             removeLastEmptyStatement(stat, lastif);
-          }
-          else {
+          } else {
             lastif.setExprents(lastif.getFirst().getExprents());
 
             StatEdge newedge = new StatEdge(EdgeType.CONTINUE, lastif, stat);
@@ -132,7 +133,7 @@ public final class MergeHelper {
 
     // found an if statement
     if (first.type == StatementType.IF) {
-      IfStatement firstif = (IfStatement)first;
+      IfStatement firstif = (IfStatement) first;
 
       if (firstif.getFirst().getExprents().isEmpty()) {
 
@@ -144,7 +145,7 @@ public final class MergeHelper {
               stat.setLoopType(LoopType.WHILE);
 
               // negate condition (while header)
-              IfExprent ifexpr = (IfExprent)firstif.getHeadexprent().copy();
+              IfExprent ifexpr = (IfExprent) firstif.getHeadexprent().copy();
               ifexpr.negateIf();
               stat.setConditionExprent(ifexpr.getCondition());
 
@@ -166,8 +167,7 @@ public final class MergeHelper {
                   DecompilerContext.getCounterContainer().getCounterAndIncrement(CounterContainer.STATEMENT_COUNTER)));
                 bstat.setExprents(new ArrayList<>());
                 stat.replaceStatement(firstif, bstat);
-              }
-              else {
+              } else {
                 // precondition: sequence must contain more than one statement!
                 Statement sequence = firstif.getParent();
                 sequence.getStats().removeWithKey(firstif.id);
@@ -176,15 +176,14 @@ public final class MergeHelper {
 
               return true;
             }
-          }
-          else {
+          } else {
             StatEdge elseedge = firstif.getAllSuccessorEdges().get(0);
             if (isDirectPath(stat, elseedge.getDestination())) {
               // exit condition identified
               stat.setLoopType(LoopType.WHILE);
 
               // no need to negate the while condition
-              stat.setConditionExprent(((IfExprent)firstif.getHeadexprent().copy()).getCondition());
+              stat.setConditionExprent(((IfExprent) firstif.getHeadexprent().copy()).getCondition());
 
               // remove edges
               StatEdge ifedge = firstif.getIfEdge();
@@ -209,8 +208,7 @@ public final class MergeHelper {
                 bstat.addSuccessor(ifedge);
 
                 stat.replaceStatement(firstif, bstat);
-              }
-              else {
+              } else {
                 // replace the if statement with its content
                 first.getParent().replaceStatement(first, firstif.getIfstat());
 
@@ -240,15 +238,14 @@ public final class MergeHelper {
       Statement parent = stat.getParent();
       if (parent == null) {
         return false;
-      }
-      else {
+      } else {
         switch (parent.type) {
           case ROOT:
             return endstat.type == StatementType.DUMMY_EXIT;
           case DO:
             return (endstat == parent);
           case SWITCH:
-            SwitchStatement swst = (SwitchStatement)parent;
+            SwitchStatement swst = (SwitchStatement) parent;
             for (int i = 0; i < swst.getCaseStatements().size() - 1; i++) {
               Statement stt = swst.getCaseStatements().get(i);
               if (stt == stat) {
@@ -264,8 +261,7 @@ public final class MergeHelper {
             return isDirectPath(parent, endstat);
         }
       }
-    }
-    else {
+    } else {
       return setStat.contains(endstat);
     }
   }
@@ -308,8 +304,7 @@ public final class MergeHelper {
       if (parent.type == StatementType.SEQUENCE) {
         if (current == parent.getFirst()) {
           current = parent;
-        }
-        else {
+        } else {
           preData = current.getNeighbours(EdgeType.REGULAR, EdgeDirection.BACKWARD).get(0);
           preData = getLastDirectData(preData);
           if (preData != null && !preData.getExprents().isEmpty()) {
@@ -320,8 +315,7 @@ public final class MergeHelper {
           }
           break;
         }
-      }
-      else {
+      } else {
         break;
       }
     }
@@ -357,8 +351,7 @@ public final class MergeHelper {
         DecompilerContext.getCounterContainer().getCounterAndIncrement(CounterContainer.STATEMENT_COUNTER)));
       bstat.setExprents(new ArrayList<>());
       dostat.replaceStatement(stat, bstat);
-    }
-    else {
+    } else {
       for (StatEdge edge : stat.getAllPredecessorEdges()) {
         edge.getSource().changeEdgeType(EdgeDirection.FORWARD, edge, EdgeType.CONTINUE);
 

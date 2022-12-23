@@ -40,11 +40,13 @@ public class ExprProcessor implements CodeConstants {
   public static final String UNKNOWN_TYPE_STRING = "<unknown>";
   public static final String NULL_TYPE_STRING = "<null>";
 
-  private static final Map<Integer, Integer> functionMap = Map.of(
-    opc_arraylength, FunctionExprent.FUNCTION_ARRAY_LENGTH,
-    opc_checkcast, FunctionExprent.FUNCTION_CAST,
-    opc_instanceof, FunctionExprent.FUNCTION_INSTANCEOF
-  );
+  private static final Map<Integer, Integer> functionMap = new HashMap<Integer, Integer>() {
+    {
+      this.put(opc_arraylength, FunctionExprent.FUNCTION_ARRAY_LENGTH);
+      this.put(opc_checkcast, FunctionExprent.FUNCTION_CAST);
+      this.put(opc_instanceof, FunctionExprent.FUNCTION_INSTANCEOF);
+    }
+  };
 
   private static final VarType[] constants = {
     VarType.VARTYPE_INT, VarType.VARTYPE_FLOAT, VarType.VARTYPE_LONG, VarType.VARTYPE_DOUBLE, VarType.VARTYPE_CLASS, VarType.VARTYPE_STRING
@@ -151,8 +153,7 @@ public class ExprProcessor implements CodeConstants {
       PrimitiveExpressionList data;
       if (mapCatch.containsKey(node.id)) {
         data = getExpressionData(mapCatch.get(node.id));
-      }
-      else {
+      } else {
         data = mapData.get(node).get(buildEntryPointKey(entryPoints));
       }
 
@@ -183,8 +184,7 @@ public class ExprProcessor implements CodeConstants {
 
           if (setFinallyLongRangeEntryPaths.contains(node.id + "##" + nd.id)) {
             nodeEntryPoints.addLast(node.id);
-          }
-          else if (!setFinallyShortRangeEntryPoints.contains(nd.id) && dgraph.mapLongRangeFinallyPaths.containsKey(node.id)) {
+          } else if (!setFinallyShortRangeEntryPoints.contains(nd.id) && dgraph.mapLongRangeFinallyPaths.containsKey(node.id)) {
             nodeEntryPoints.removeLast(); // currentEntrypoint should not be null at this point
           }
 
@@ -214,11 +214,9 @@ public class ExprProcessor implements CodeConstants {
   private static String buildEntryPointKey(LinkedList<String> entryPoints) {
     if (entryPoints.isEmpty()) {
       return EMPTY_ENTRY_POINTS_KEY;
-    }
-    else if (entryPoints.size() == 1) {
+    } else if (entryPoints.size() == 1) {
       return entryPoints.getFirst();
-    }
-    else {
+    } else {
       return String.join(":", entryPoints);
     }
   }
@@ -227,13 +225,12 @@ public class ExprProcessor implements CodeConstants {
     List<VarExprent> lst = null;
 
     if (stat.type == StatementType.CATCH_ALL) {
-      CatchAllStatement catchall = (CatchAllStatement)stat;
+      CatchAllStatement catchall = (CatchAllStatement) stat;
       if (!catchall.isFinally()) {
         lst = catchall.getVars();
       }
-    }
-    else if (stat.type == StatementType.TRY_CATCH) {
-      lst = ((CatchStatement)stat).getVars();
+    } else if (stat.type == StatementType.TRY_CATCH) {
+      lst = ((CatchStatement) stat).getVars();
     }
 
     if (lst != null) {
@@ -266,7 +263,7 @@ public class ExprProcessor implements CodeConstants {
     for (int i = 0; i < seq.length(); i++) {
       Instruction instr = seq.getInstr(i);
       Integer offset = block.getOriginalOffset(i);
-      Set<Integer> offsets = offset >= 0 ? Set.of(offset) : null;
+      Set<Integer> offsets = offset >= 0 ? Collections.singleton(offset) : null;
 
       switch (instr.opcode) {
         case opc_aconst_null:
@@ -278,27 +275,26 @@ public class ExprProcessor implements CodeConstants {
           break;
         case opc_lconst_0:
         case opc_lconst_1:
-          pushEx(stack, exprList, new ConstExprent(VarType.VARTYPE_LONG, (long)(instr.opcode - opc_lconst_0), offsets));
+          pushEx(stack, exprList, new ConstExprent(VarType.VARTYPE_LONG, (long) (instr.opcode - opc_lconst_0), offsets));
           break;
         case opc_fconst_0:
         case opc_fconst_1:
         case opc_fconst_2:
-          pushEx(stack, exprList, new ConstExprent(VarType.VARTYPE_FLOAT, (float)(instr.opcode - opc_fconst_0), offsets));
+          pushEx(stack, exprList, new ConstExprent(VarType.VARTYPE_FLOAT, (float) (instr.opcode - opc_fconst_0), offsets));
           break;
         case opc_dconst_0:
         case opc_dconst_1:
-          pushEx(stack, exprList, new ConstExprent(VarType.VARTYPE_DOUBLE, (double)(instr.opcode - opc_dconst_0), offsets));
+          pushEx(stack, exprList, new ConstExprent(VarType.VARTYPE_DOUBLE, (double) (instr.opcode - opc_dconst_0), offsets));
           break;
         case opc_ldc:
         case opc_ldc_w:
         case opc_ldc2_w: {
           PooledConstant cn = pool.getConstant(instr.operand(0));
           if (cn instanceof PrimitiveConstant) {
-            pushEx(stack, exprList, new ConstExprent(constants[cn.type - CONSTANT_Integer], ((PrimitiveConstant)cn).value, offsets));
-          }
-          else if (cn instanceof LinkConstant) {
+            pushEx(stack, exprList, new ConstExprent(constants[cn.type - CONSTANT_Integer], ((PrimitiveConstant) cn).value, offsets));
+          } else if (cn instanceof LinkConstant) {
             //TODO: for now treat Links as Strings
-            pushEx(stack, exprList, new ConstExprent(VarType.VARTYPE_STRING, ((LinkConstant)cn).elementname, offsets));
+            pushEx(stack, exprList, new ConstExprent(VarType.VARTYPE_STRING, ((LinkConstant) cn).elementname, offsets));
           }
           break;
         }
@@ -456,9 +452,9 @@ public class ExprProcessor implements CodeConstants {
         case opc_return:
         case opc_athrow:
           exprList.add(new ExitExprent(instr.opcode == opc_athrow ? ExitExprent.EXIT_THROW : ExitExprent.EXIT_RETURN,
-                                       instr.opcode == opc_return ? null : stack.pop(),
-                                       instr.opcode == opc_athrow ? null : methodDescriptor.ret,
-                                       offsets));
+            instr.opcode == opc_return ? null : stack.pop(),
+            instr.opcode == opc_athrow ? null : methodDescriptor.ret,
+            offsets));
           break;
         case opc_monitorenter:
         case opc_monitorexit:
@@ -473,7 +469,7 @@ public class ExprProcessor implements CodeConstants {
         case opc_getstatic:
         case opc_getfield:
           pushEx(stack, exprList,
-                 new FieldExprent(pool.getLinkConstant(instr.operand(0)), instr.opcode == opc_getstatic ? null : stack.pop(), offsets));
+            new FieldExprent(pool.getLinkConstant(instr.operand(0)), instr.opcode == opc_getstatic ? null : stack.pop(), offsets));
           break;
         case opc_putstatic:
         case opc_putfield:
@@ -498,8 +494,7 @@ public class ExprProcessor implements CodeConstants {
             InvocationExprent exprinv = new InvocationExprent(instr.opcode, invoke_constant, bootstrap_arguments, stack, offsets);
             if (exprinv.getDescriptor().ret.getType() == CodeConstants.TYPE_VOID) {
               exprList.add(exprinv);
-            }
-            else {
+            } else {
               pushEx(stack, exprList, exprinv);
             }
           }
@@ -526,16 +521,14 @@ public class ExprProcessor implements CodeConstants {
         case opc_dup_x2:
           if (stack.getByOffset(-2).getExprType().getStackSize() == 2) {
             insertByOffsetEx(-2, stack, exprList, -1);
-          }
-          else {
+          } else {
             insertByOffsetEx(-3, stack, exprList, -1);
           }
           break;
         case opc_dup2:
           if (stack.getByOffset(-1).getExprType().getStackSize() == 2) {
             pushEx(stack, exprList, stack.getByOffset(-1).copy());
-          }
-          else {
+          } else {
             pushEx(stack, exprList, stack.getByOffset(-2).copy());
             pushEx(stack, exprList, stack.getByOffset(-2).copy());
           }
@@ -543,8 +536,7 @@ public class ExprProcessor implements CodeConstants {
         case opc_dup2_x1:
           if (stack.getByOffset(-1).getExprType().getStackSize() == 2) {
             insertByOffsetEx(-2, stack, exprList, -1);
-          }
-          else {
+          } else {
             insertByOffsetEx(-3, stack, exprList, -2);
             insertByOffsetEx(-3, stack, exprList, -1);
           }
@@ -553,17 +545,14 @@ public class ExprProcessor implements CodeConstants {
           if (stack.getByOffset(-1).getExprType().getStackSize() == 2) {
             if (stack.getByOffset(-2).getExprType().getStackSize() == 2) {
               insertByOffsetEx(-2, stack, exprList, -1);
-            }
-            else {
+            } else {
               insertByOffsetEx(-3, stack, exprList, -1);
             }
-          }
-          else {
+          } else {
             if (stack.getByOffset(-3).getExprType().getStackSize() == 2) {
               insertByOffsetEx(-3, stack, exprList, -2);
               insertByOffsetEx(-3, stack, exprList, -1);
-            }
-            else {
+            } else {
               insertByOffsetEx(-4, stack, exprList, -2);
               insertByOffsetEx(-4, stack, exprList, -1);
             }
@@ -593,7 +582,12 @@ public class ExprProcessor implements CodeConstants {
     InstructionSequence seq = block.getSeq();
     while (++index < seq.length()) {
       switch (seq.getInstr(index).opcode) {
-        case opc_nop, opc_istore, opc_lstore, opc_fstore, opc_dstore, opc_astore -> {
+        case opc_nop:
+        case opc_istore:
+        case opc_lstore:
+        case opc_fstore:
+        case opc_dstore:
+        case opc_astore: {
           continue;
         }
       }
@@ -632,14 +626,14 @@ public class ExprProcessor implements CodeConstants {
       VarExprent varnew = new VarExprent(base + i + 1, varex.getExprType(), varProcessor);
       varnew.setStack(true);
       exprlist.add(new AssignmentExprent(varnew, varex, null));
-      lst.add(0, (VarExprent)varnew.copy());
+      lst.add(0, (VarExprent) varnew.copy());
     }
 
     Exprent exprent = lst.get(lst.size() + copyoffset).copy();
     VarExprent var = new VarExprent(base + offset, exprent.getExprType(), varProcessor);
     var.setStack(true);
     exprlist.add(new AssignmentExprent(var, exprent, null));
-    lst.add(0, (VarExprent)var.copy());
+    lst.add(0, (VarExprent) var.copy());
 
     for (VarExprent expr : lst) {
       stack.push(expr);
@@ -657,20 +651,16 @@ public class ExprProcessor implements CodeConstants {
     if (tp <= CodeConstants.TYPE_BOOLEAN) {
       sb.append(typeNames[tp]);
       return sb.toString();
-    }
-    else if (tp == CodeConstants.TYPE_UNKNOWN) {
+    } else if (tp == CodeConstants.TYPE_UNKNOWN) {
       sb.append(UNKNOWN_TYPE_STRING);
       return sb.toString(); // INFO: should not occur
-    }
-    else if (tp == CodeConstants.TYPE_NULL) {
+    } else if (tp == CodeConstants.TYPE_NULL) {
       sb.append(NULL_TYPE_STRING);
       return sb.toString(); // INFO: should not occur
-    }
-    else if (tp == CodeConstants.TYPE_VOID) {
+    } else if (tp == CodeConstants.TYPE_VOID) {
       sb.append("void");
       return sb.toString();
-    }
-    else if (tp == CodeConstants.TYPE_OBJECT) {
+    } else if (tp == CodeConstants.TYPE_OBJECT) {
       String ret;
       if (getShort) {
         ret = DecompilerContext.getImportCollector().getNestedName(type.getValue());
@@ -701,9 +691,10 @@ public class ExprProcessor implements CodeConstants {
       }
       StructTypePathEntry pathEntry = typeAnnWriteHelper.getPaths().peek();
       if (pathEntry != null
-          && pathEntry.getTypePathEntryKind() == StructTypePathEntry.Kind.NESTED.getId()
-          && type.isAnnotatable()
-      ) typeAnnWriteHelper.getPaths().pop();
+        && pathEntry.getTypePathEntryKind() == StructTypePathEntry.Kind.NESTED.getId()
+        && type.isAnnotatable()
+      )
+        typeAnnWriteHelper.getPaths().pop();
       return true;
     }).collect(Collectors.toList());
   }
@@ -724,13 +715,15 @@ public class ExprProcessor implements CodeConstants {
         shouldWrite = !nestedType.equals(enclosingType);
       }
       if (i == 0) { // first annotation can be written already
-        if (!sb.toString().isEmpty()) shouldWrite = true; // write if annotation exists
+        if (!sb.toString().isEmpty())
+          shouldWrite = true; // write if annotation exists
       } else {
         if (canWriteNestedTypeAnnotation(curPathBldr + nestedType + '$', nestedTypes.subList(i + 1, nestedTypes.size()))) {
           List<TypeAnnotationWriteHelper> notWrittenTypeAnnotations = writeNestedTypeAnnotations(sb, typeAnnWriteHelpers);
           shouldWrite |= (notWrittenTypeAnnotations.size() != typeAnnWriteHelpers.size());
           typeAnnWriteHelpers = notWrittenTypeAnnotations;
-          if (i != nestedTypes.size() - 1) popNestedTypeAnnotation(typeAnnWriteHelpers);
+          if (i != nestedTypes.size() - 1)
+            popNestedTypeAnnotation(typeAnnWriteHelpers);
         }
       }
       if (shouldWrite) {
@@ -749,10 +742,12 @@ public class ExprProcessor implements CodeConstants {
    * Nested type annotations can only be written when all types on the right of the currently annotated type don't reference a static class.
    */
   public static boolean canWriteNestedTypeAnnotation(String curPath, List<String> nestedTypes) {
-    if (nestedTypes.isEmpty()) return true;
+    if (nestedTypes.isEmpty())
+      return true;
     String fullName = curPath + nestedTypes.get(0);
     ClassesProcessor.ClassNode classNode = DecompilerContext.getClassProcessor().getMapRootClasses().get(fullName);
-    if (classNode == null) return false;
+    if (classNode == null)
+      return false;
     return (classNode.access & CodeConstants.ACC_STATIC) == 0 && canWriteNestedTypeAnnotation(fullName + "$", nestedTypes.subList(1, nestedTypes.size()));
   }
 
@@ -760,14 +755,14 @@ public class ExprProcessor implements CodeConstants {
     ClassesProcessor.ClassNode enclosingClass = (ClassesProcessor.ClassNode) DecompilerContext.getProperty(
       DecompilerContext.CURRENT_CLASS_NODE
     );
-    List<ClassesProcessor.ClassNode> enclosingClassList = new ArrayList<>(List.of(enclosingClass));
+    List<ClassesProcessor.ClassNode> enclosingClassList = new ArrayList<>(Collections.singletonList(enclosingClass));
     while (enclosingClass.parent != null) {
       enclosingClass = enclosingClass.parent;
       enclosingClassList.add(0, enclosingClass);
     }
     return enclosingClassList.stream()
       .filter(classNode -> classNode.type != ClassesProcessor.ClassNode.CLASS_ANONYMOUS &&
-                           classNode.type != ClassesProcessor.ClassNode.CLASS_LAMBDA
+        classNode.type != ClassesProcessor.ClassNode.CLASS_LAMBDA
       ).collect(Collectors.toList());
   }
 
@@ -858,17 +853,17 @@ public class ExprProcessor implements CodeConstants {
   public static boolean endsWithSemicolon(Exprent expr) {
     int type = expr.type;
     return !(type == Exprent.EXPRENT_SWITCH ||
-             type == Exprent.EXPRENT_MONITOR ||
-             type == Exprent.EXPRENT_IF ||
-             (type == Exprent.EXPRENT_VAR && ((VarExprent)expr).isClassDef()));
+      type == Exprent.EXPRENT_MONITOR ||
+      type == Exprent.EXPRENT_IF ||
+      (type == Exprent.EXPRENT_VAR && ((VarExprent) expr).isClassDef()));
   }
 
   private static void addDeletedGotoInstructionMapping(Statement stat, BytecodeMappingTracer tracer) {
     if (stat instanceof BasicBlockStatement) {
-      BasicBlock block = ((BasicBlockStatement)stat).getBlock();
+      BasicBlock block = ((BasicBlockStatement) stat).getBlock();
       List<Integer> offsets = block.getOriginalOffsets();
       if (!offsets.isEmpty() &&
-          offsets.size() > block.getSeq().length()) { // some instructions have been deleted, but we still have offsets
+        offsets.size() > block.getSeq().length()) { // some instructions have been deleted, but we still have offsets
         tracer.addMapping(offsets.get(offsets.size() - 1)); // add the last offset
       }
     }
@@ -886,8 +881,7 @@ public class ExprProcessor implements CodeConstants {
         if (EdgeType.BREAK.equals(edge.getType())) {
           addDeletedGotoInstructionMapping(stat, tracer);
           buf.append("break");
-        }
-        else if (EdgeType.CONTINUE.equals(edge.getType())) {
+        } else if (EdgeType.CONTINUE.equals(edge.getType())) {
           addDeletedGotoInstructionMapping(stat, tracer);
           buf.append("continue");
         }
@@ -930,7 +924,7 @@ public class ExprProcessor implements CodeConstants {
     TextBuffer buf = new TextBuffer();
 
     for (Exprent expr : lst) {
-      if (buf.length() > 0 && expr.type == Exprent.EXPRENT_VAR && ((VarExprent)expr).isClassDef()) {
+      if (buf.length() > 0 && expr.type == Exprent.EXPRENT_VAR && ((VarExprent) expr).isClassDef()) {
         // separates local class definition from previous statements
         buf.appendLineSeparator();
         tracer.incrementCurrentSourceLine();
@@ -939,11 +933,11 @@ public class ExprProcessor implements CodeConstants {
       TextBuffer content = expr.toJava(indent, tracer);
 
       if (content.length() > 0) {
-        if (expr.type != Exprent.EXPRENT_VAR || !((VarExprent)expr).isClassDef()) {
+        if (expr.type != Exprent.EXPRENT_VAR || !((VarExprent) expr).isClassDef()) {
           buf.appendIndent(indent);
         }
         buf.append(content);
-        if (expr.type == Exprent.EXPRENT_MONITOR && ((MonitorExprent)expr).getMonType() == MonitorExprent.MONITOR_ENTER) {
+        if (expr.type == Exprent.EXPRENT_MONITOR && ((MonitorExprent) expr).getMonType() == MonitorExprent.MONITOR_ENTER) {
           buf.append("{}"); // empty synchronized block
         }
         if (endsWithSemicolon(expr)) {
@@ -961,17 +955,13 @@ public class ExprProcessor implements CodeConstants {
     ConstExprent defaultVal;
     if (arrType.getType() == CodeConstants.TYPE_OBJECT || arrType.getArrayDim() > 0) {
       defaultVal = new ConstExprent(VarType.VARTYPE_NULL, null, null);
-    }
-    else if (arrType.getType() == CodeConstants.TYPE_FLOAT) {
+    } else if (arrType.getType() == CodeConstants.TYPE_FLOAT) {
       defaultVal = new ConstExprent(VarType.VARTYPE_FLOAT, 0f, null);
-    }
-    else if (arrType.getType() == CodeConstants.TYPE_LONG) {
+    } else if (arrType.getType() == CodeConstants.TYPE_LONG) {
       defaultVal = new ConstExprent(VarType.VARTYPE_LONG, 0L, null);
-    }
-    else if (arrType.getType() == CodeConstants.TYPE_DOUBLE) {
+    } else if (arrType.getType() == CodeConstants.TYPE_DOUBLE) {
       defaultVal = new ConstExprent(VarType.VARTYPE_DOUBLE, 0d, null);
-    }
-    else { // integer types
+    } else { // integer types
       defaultVal = new ConstExprent(0, true, null);
     }
     return defaultVal;
@@ -998,11 +988,11 @@ public class ExprProcessor implements CodeConstants {
 
     if (unbox) {
       // "unbox" invocation parameters, e.g. 'byteSet.add((byte)123)' or 'new ShortContainer((short)813)'
-      if (exprent.type == Exprent.EXPRENT_INVOCATION && ((InvocationExprent)exprent).isBoxingCall()) {
-        InvocationExprent invocationExprent = (InvocationExprent)exprent;
+      if (exprent.type == Exprent.EXPRENT_INVOCATION && ((InvocationExprent) exprent).isBoxingCall()) {
+        InvocationExprent invocationExprent = (InvocationExprent) exprent;
         exprent = invocationExprent.getParameters().get(0);
         int paramType = invocationExprent.getDescriptor().params[0].getType();
-        if (exprent.type == Exprent.EXPRENT_CONST && ((ConstExprent)exprent).getConstType().getType() != paramType) {
+        if (exprent.type == Exprent.EXPRENT_CONST && ((ConstExprent) exprent).getConstType().getType() != paramType) {
           leftType = new VarType(paramType);
         }
       }
@@ -1012,9 +1002,9 @@ public class ExprProcessor implements CodeConstants {
 
     boolean cast =
       castAlways ||
-      (!leftType.isSuperset(rightType) && (rightType.equals(VarType.VARTYPE_OBJECT) || leftType.getType() != CodeConstants.TYPE_OBJECT)) ||
-      (castNull && rightType.getType() == CodeConstants.TYPE_NULL && !UNDEFINED_TYPE_STRING.equals(getTypeName(leftType, Collections.emptyList()))) ||
-      (castNarrowing && isIntConstant(exprent) && isNarrowedIntType(leftType));
+        (!leftType.isSuperset(rightType) && (rightType.equals(VarType.VARTYPE_OBJECT) || leftType.getType() != CodeConstants.TYPE_OBJECT)) ||
+        (castNull && rightType.getType() == CodeConstants.TYPE_NULL && !UNDEFINED_TYPE_STRING.equals(getTypeName(leftType, Collections.emptyList()))) ||
+        (castNarrowing && isIntConstant(exprent) && isNarrowedIntType(leftType));
 
     boolean quote = cast && exprent.getPrecedence() >= FunctionExprent.getPrecedence(FunctionExprent.FUNCTION_CAST);
 
@@ -1022,15 +1012,16 @@ public class ExprProcessor implements CodeConstants {
     if (castNarrowing && exprent.type == Exprent.EXPRENT_CONST && !((ConstExprent) exprent).isNull()) {
       if (leftType.equals(VarType.VARTYPE_BYTE_OBJ)) {
         leftType = VarType.VARTYPE_BYTE;
-      }
-      else if (leftType.equals(VarType.VARTYPE_SHORT_OBJ)) {
+      } else if (leftType.equals(VarType.VARTYPE_SHORT_OBJ)) {
         leftType = VarType.VARTYPE_SHORT;
       }
     }
 
-    if (cast) buffer.append('(').append(ExprProcessor.getCastTypeName(leftType, Collections.emptyList())).append(')');
+    if (cast)
+      buffer.append('(').append(ExprProcessor.getCastTypeName(leftType, Collections.emptyList())).append(')');
 
-    if (quote) buffer.append('(');
+    if (quote)
+      buffer.append('(');
 
     if (exprent.type == Exprent.EXPRENT_CONST) {
       ((ConstExprent) exprent).adjustConstType(leftType);
@@ -1038,16 +1029,20 @@ public class ExprProcessor implements CodeConstants {
 
     buffer.append(exprent.toJava(indent, tracer));
 
-    if (quote) buffer.append(')');
+    if (quote)
+      buffer.append(')');
 
     return cast;
   }
 
   private static boolean isIntConstant(Exprent exprent) {
     if (exprent.type == Exprent.EXPRENT_CONST) {
-      switch (((ConstExprent)exprent).getConstType().getType()) {
-        case CodeConstants.TYPE_BYTE, CodeConstants.TYPE_BYTECHAR, CodeConstants.TYPE_SHORT,
-          CodeConstants.TYPE_SHORTCHAR, CodeConstants.TYPE_INT -> {
+      switch (((ConstExprent) exprent).getConstType().getType()) {
+        case CodeConstants.TYPE_BYTE:
+        case CodeConstants.TYPE_BYTECHAR:
+        case CodeConstants.TYPE_SHORT:
+        case CodeConstants.TYPE_SHORTCHAR:
+        case CodeConstants.TYPE_INT: {
           return true;
         }
       }

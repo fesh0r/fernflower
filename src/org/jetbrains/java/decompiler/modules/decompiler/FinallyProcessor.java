@@ -61,32 +61,28 @@ public class FinallyProcessor {
 
       Statement parent = stat.getParent();
       if (parent != null && parent.type == StatementType.CATCH_ALL &&
-          stat == parent.getFirst() && !parent.isCopied()) {
+        stat == parent.getFirst() && !parent.isCopied()) {
 
-        CatchAllStatement fin = (CatchAllStatement)parent;
+        CatchAllStatement fin = (CatchAllStatement) parent;
         BasicBlock head = fin.getBasichead().getBlock();
         BasicBlock handler = fin.getHandler().getBasichead().getBlock();
 
         if (catchallBlockIDs.containsKey(handler.id)) {
           // do nothing
-        }
-        else if (finallyBlockIDs.containsKey(handler.id)) {
+        } else if (finallyBlockIDs.containsKey(handler.id)) {
           fin.setFinally(true);
 
           Integer var = finallyBlockIDs.get(handler.id);
           fin.setMonitor(var == null ? null : new VarExprent(var, VarType.VARTYPE_INT, varProcessor));
-        }
-        else {
+        } else {
           Record inf = getFinallyInformation(cl, mt, root, fin);
 
           if (inf == null) { // inconsistent finally
             catchallBlockIDs.put(handler.id, null);
-          }
-          else {
+          } else {
             if (DecompilerContext.getOption(IFernflowerPreferences.FINALLY_DEINLINE) && verifyFinallyEx(graph, fin, inf)) {
               finallyBlockIDs.put(handler.id, null);
-            }
-            else {
+            } else {
               int varIndex = DecompilerContext.getCounterContainer().getCounterAndIncrement(CounterContainer.VAR_COUNTER);
               insertSemaphore(graph, getAllBasicBlocks(fin.getFirst()), head, handler, varIndex, inf, bytecodeVersion);
 
@@ -125,11 +121,18 @@ public class FinallyProcessor {
     BasicBlock firstBasicBlock = firstBlockStatement.getBlock();
     Instruction instrFirst = firstBasicBlock.getInstruction(0);
 
-    int firstCode = switch (instrFirst.opcode) {
-      case CodeConstants.opc_pop -> 1;
-      case CodeConstants.opc_astore -> 2;
-      default -> 0;
-    };
+    int firstCode;
+    switch (instrFirst.opcode) {
+      case CodeConstants.opc_pop:
+        firstCode = 1;
+        break;
+      case CodeConstants.opc_astore:
+        firstCode = 2;
+        break;
+      default:
+        firstCode = 0;
+    }
+    ;
 
     ExprProcessor proc = new ExprProcessor(methodDescriptor, varProcessor);
     proc.processStatement(root, cl);
@@ -139,7 +142,7 @@ public class FinallyProcessor {
 
     List<Exprent> expressions = firstBlockStatement.getExprents();
 
-    VarVersionPair pair = new VarVersionPair((VarExprent)((AssignmentExprent)expressions.get(firstCode == 2 ? 1 : 0)).getLeft());
+    VarVersionPair pair = new VarVersionPair((VarExprent) ((AssignmentExprent) expressions.get(firstCode == 2 ? 1 : 0)).getLeft());
 
     FlattenStatementsHelper flattenHelper = new FlattenStatementsHelper();
     DirectGraph dgraph = flattenHelper.buildDirectGraph(root);
@@ -160,8 +163,7 @@ public class FinallyProcessor {
       BasicBlockStatement blockStatement = null;
       if (node.block != null) {
         blockStatement = node.block;
-      }
-      else if (node.predecessors.size() == 1) {
+      } else if (node.predecessors.size() == 1) {
         blockStatement = node.predecessors.get(0).block;
       }
 
@@ -179,7 +181,7 @@ public class FinallyProcessor {
 
             boolean found = false;
             for (Exprent expr : lst) {
-              if (expr.type == Exprent.EXPRENT_VAR && new VarVersionPair((VarExprent)expr).equals(pair)) {
+              if (expr.type == Exprent.EXPRENT_VAR && new VarVersionPair((VarExprent) expr).equals(pair)) {
                 found = true;
                 break;
               }
@@ -188,7 +190,7 @@ public class FinallyProcessor {
             if (found) {
               found = false;
               if (exprent.type == Exprent.EXPRENT_EXIT) {
-                ExitExprent exit = (ExitExprent)exprent;
+                ExitExprent exit = (ExitExprent) exprent;
                 if (exit.getExitType() == ExitExprent.EXIT_THROW && exit.getValue().type == Exprent.EXPRENT_VAR) {
                   found = true;
                 }
@@ -196,18 +198,16 @@ public class FinallyProcessor {
 
               if (!found) {
                 return null;
-              }
-              else {
+              } else {
                 isTrueExit = true;
               }
             }
-          }
-          else {  // firstCode == 2
+          } else {  // firstCode == 2
             // searching for a load instruction
             if (exprent.type == Exprent.EXPRENT_ASSIGNMENT) {
-              AssignmentExprent assignment = (AssignmentExprent)exprent;
+              AssignmentExprent assignment = (AssignmentExprent) exprent;
               if (assignment.getRight().type == Exprent.EXPRENT_VAR &&
-                  new VarVersionPair((VarExprent)assignment.getRight()).equals(pair)) {
+                new VarVersionPair((VarExprent) assignment.getRight()).equals(pair)) {
                 Exprent next = null;
                 if (i == node.exprents.size() - 1) {
                   if (node.successors.size() == 1) {
@@ -216,24 +216,22 @@ public class FinallyProcessor {
                       next = nd.exprents.get(0);
                     }
                   }
-                }
-                else {
+                } else {
                   next = node.exprents.get(i + 1);
                 }
 
                 boolean found = false;
                 if (next != null && next.type == Exprent.EXPRENT_EXIT) {
-                  ExitExprent exit = (ExitExprent)next;
+                  ExitExprent exit = (ExitExprent) next;
                   if (exit.getExitType() == ExitExprent.EXIT_THROW && exit.getValue().type == Exprent.EXPRENT_VAR &&
-                      assignment.getLeft().equals(exit.getValue())) {
+                    assignment.getLeft().equals(exit.getValue())) {
                     found = true;
                   }
                 }
 
                 if (!found) {
                   return null;
-                }
-                else {
+                } else {
                   isTrueExit = true;
                 }
               }
@@ -247,7 +245,7 @@ public class FinallyProcessor {
         Statement handler = fstat.getHandler();
         for (StatEdge edge : blockStatement.getSuccessorEdges(EdgeType.DIRECT_ALL)) {
           if (edge.getType() != EdgeType.REGULAR && handler.containsStatement(blockStatement)
-              && !handler.containsStatement(edge.getDestination())) {
+            && !handler.containsStatement(edge.getDestination())) {
             Boolean existingFlag = mapLast.get(blockStatement.getBlock());
             // note: the dummy node is also processed!
             if (existingFlag == null || !existingFlag) {
@@ -266,12 +264,22 @@ public class FinallyProcessor {
       boolean isFirstLast = mapLast.containsKey(firstBasicBlock);
       InstructionSequence seq = firstBasicBlock.getSeq();
 
-      boolean isEmpty = switch (firstCode) {
-        case 0 -> isFirstLast && seq.length() == 1;
-        case 1 -> seq.length() == 1;
-        case 2 -> isFirstLast ? seq.length() == 3 : seq.length() == 1;
-        default -> false;
-      };
+      boolean isEmpty;
+      switch (firstCode) {
+        case 0:
+          isEmpty = isFirstLast && seq.length() == 1;
+          break;
+        case 1:
+          isEmpty = seq.length() == 1;
+          break;
+        case 2:
+          isEmpty = isFirstLast ? seq.length() == 3 : seq.length() == 1;
+          break;
+        default:
+          isEmpty = false;
+          break;
+      }
+      ;
 
       if (isEmpty) {
         firstCode = 3;
@@ -400,8 +408,7 @@ public class FinallyProcessor {
       Statement st = lst.get(index);
       if (st.type == StatementType.BASIC_BLOCK) {
         index++;
-      }
-      else {
+      } else {
         lst.addAll(st.getStats());
         lst.remove(index);
       }
@@ -410,7 +417,7 @@ public class FinallyProcessor {
 
     Set<BasicBlock> res = new HashSet<>();
     for (Statement st : lst) {
-      res.add(((BasicBlockStatement)st).getBlock());
+      res.add(((BasicBlockStatement) st).getBlock());
     }
     return res;
   }
@@ -434,8 +441,7 @@ public class FinallyProcessor {
       }
 
       return true;
-    }
-    else {
+    } else {
       if (first.getSeq().length() == 1 && finallyType > 0) {
         BasicBlock firstSuccessor = first.getSuccessors().get(0);
         if (catchBlocks.contains(firstSuccessor)) {
@@ -557,8 +563,7 @@ public class FinallyProcessor {
       // exception successors
       if (isLastBlock && blockSample.getSeq().isEmpty()) {
         // do nothing, blockSample will be removed anyway
-      }
-      else {
+      } else {
         if (blockCatch.getSuccessorExceptions().size() == blockSample.getSuccessorExceptions().size()) {
           for (int i = 0; i < blockCatch.getSuccessorExceptions().size(); i++) {
             BasicBlock sucCatch = blockCatch.getSuccessorExceptions().get(i);
@@ -577,7 +582,7 @@ public class FinallyProcessor {
                   Instruction instrSample = sucSample.getSeq().getInstr(0);
 
                   if (instrCatch.opcode == CodeConstants.opc_astore &&
-                      instrSample.opcode == CodeConstants.opc_astore) {
+                    instrSample.opcode == CodeConstants.opc_astore) {
                     lst = new ArrayList<>(lst);
                     lst.add(new int[]{instrCatch.operand(0), instrSample.operand(0)});
                   }
@@ -585,13 +590,11 @@ public class FinallyProcessor {
 
                 stack.add(new BlockStackEntry(sucCatch, sucSample, lst));
               }
-            }
-            else {
+            } else {
               return null;
             }
           }
-        }
-        else {
+        } else {
           return null;
         }
       }
@@ -625,12 +628,10 @@ public class FinallyProcessor {
         next = arr[1];
         multiple = false;
         break;
-      }
-      else {
+      } else {
         if (next == null) {
           next = arr[1];
-        }
-        else if (next != arr[1]) {
+        } else if (next != arr[1]) {
           multiple = true;
         }
 
@@ -663,12 +664,10 @@ public class FinallyProcessor {
                   }
                 }
               }
-            }
-            else {
+            } else {
               return null;
             }
-          }
-          else {
+          } else {
             return null;
           }
         }
@@ -850,8 +849,7 @@ public class FinallyProcessor {
 
         if (setCommonRemovedExceptionRanges == null) {
           setCommonRemovedExceptionRanges = setRemovedExceptionRanges;
-        }
-        else {
+        } else {
           setCommonRemovedExceptionRanges.retainAll(setRemovedExceptionRanges);
         }
 
@@ -899,8 +897,7 @@ public class FinallyProcessor {
       for (int i = seq.length() - 1; i >= 0; i--) {
         seq.removeInstruction(i);
       }
-    }
-    else {
+    } else {
       if ((blockType & 1) > 0) { // first
         if (finallyType == 2 || finallyType == 1) { // `AStore` or `Pop`
           seq.removeInstruction(0);

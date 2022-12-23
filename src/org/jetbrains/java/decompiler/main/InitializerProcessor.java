@@ -51,9 +51,9 @@ public final class InitializerProcessor {
           int action = 0;
 
           if (exprent.type == Exprent.EXPRENT_ASSIGNMENT) {
-            AssignmentExprent assignExpr = (AssignmentExprent)exprent;
+            AssignmentExprent assignExpr = (AssignmentExprent) exprent;
             if (assignExpr.getLeft().type == Exprent.EXPRENT_FIELD && assignExpr.getRight().type == Exprent.EXPRENT_VAR) {
-              FieldExprent fExpr = (FieldExprent)assignExpr.getLeft();
+              FieldExprent fExpr = (FieldExprent) assignExpr.getLeft();
               if (fExpr.getClassname().equals(wrapper.getClassStruct().qualifiedName)) {
                 StructField structField = wrapper.getClassStruct().getField(fExpr.getName(), fExpr.getDescriptor().descriptorString);
                 if (structField != null && structField.hasModifier(CodeConstants.ACC_FINAL)) {
@@ -61,9 +61,8 @@ public final class InitializerProcessor {
                 }
               }
             }
-          }
-          else if (index > 0 && exprent.type == Exprent.EXPRENT_INVOCATION &&
-                   Statements.isInvocationInitConstructor((InvocationExprent)exprent, method, wrapper, true)) {
+          } else if (index > 0 && exprent.type == Exprent.EXPRENT_INVOCATION &&
+            Statements.isInvocationInitConstructor((InvocationExprent) exprent, method, wrapper, true)) {
             // this() or super()
             lstExprents.add(0, lstExprents.remove(index));
             action = 2;
@@ -89,7 +88,7 @@ public final class InitializerProcessor {
 
         Exprent exprent = firstData.getExprents().get(0);
         if (exprent.type == Exprent.EXPRENT_INVOCATION) {
-          InvocationExprent invExpr = (InvocationExprent)exprent;
+          InvocationExprent invExpr = (InvocationExprent) exprent;
           if (Statements.isInvocationInitConstructor(invExpr, method, wrapper, false) && invExpr.getParameters().isEmpty()) {
             firstData.getExprents().remove(0);
           }
@@ -111,11 +110,11 @@ public final class InitializerProcessor {
         boolean found = false;
 
         if (exprent.type == Exprent.EXPRENT_ASSIGNMENT) {
-          AssignmentExprent assignExpr = (AssignmentExprent)exprent;
+          AssignmentExprent assignExpr = (AssignmentExprent) exprent;
           if (assignExpr.getLeft().type == Exprent.EXPRENT_FIELD) {
-            FieldExprent fExpr = (FieldExprent)assignExpr.getLeft();
+            FieldExprent fExpr = (FieldExprent) assignExpr.getLeft();
             if (fExpr.isStatic() && fExpr.getClassname().equals(cl.qualifiedName) &&
-                cl.hasField(fExpr.getName(), fExpr.getDescriptor().descriptorString)) {
+              cl.hasField(fExpr.getName(), fExpr.getDescriptor().descriptorString)) {
 
               // interfaces fields should always be initialized inline
               if (inlineInitializers || isExprentIndependent(assignExpr.getRight(), method)) {
@@ -157,7 +156,7 @@ public final class InitializerProcessor {
         Exprent exprent = firstData.getExprents().get(0);
         if (!isAnonymous) { // FIXME: doesn't make sense
           if (exprent.type != Exprent.EXPRENT_INVOCATION ||
-              !Statements.isInvocationInitConstructor((InvocationExprent)exprent, method, wrapper, false)) {
+            !Statements.isInvocationInitConstructor((InvocationExprent) exprent, method, wrapper, false)) {
             return;
           }
         }
@@ -184,21 +183,20 @@ public final class InitializerProcessor {
         boolean found = false;
 
         if (exprent.type == Exprent.EXPRENT_ASSIGNMENT) {
-          AssignmentExprent assignExpr = (AssignmentExprent)exprent;
+          AssignmentExprent assignExpr = (AssignmentExprent) exprent;
           if (assignExpr.getLeft().type == Exprent.EXPRENT_FIELD) {
-            FieldExprent fExpr = (FieldExprent)assignExpr.getLeft();
+            FieldExprent fExpr = (FieldExprent) assignExpr.getLeft();
             if (!fExpr.isStatic() && fExpr.getClassname().equals(cl.qualifiedName) &&
-                cl.hasField(fExpr.getName(), fExpr.getDescriptor().descriptorString)) { // check for the physical existence of the field. Could be defined in a superclass.
+              cl.hasField(fExpr.getName(), fExpr.getDescriptor().descriptorString)) { // check for the physical existence of the field. Could be defined in a superclass.
 
               if (isExprentIndependent(assignExpr.getRight(), lstMethodWrappers.get(i))) {
                 String fieldKey = InterpreterUtil.makeUniqueKey(fExpr.getName(), fExpr.getDescriptor().descriptorString);
                 if (fieldWithDescr == null) {
                   fieldWithDescr = fieldKey;
                   value = assignExpr.getRight();
-                }
-                else {
+                } else {
                   if (!fieldWithDescr.equals(fieldKey) ||
-                      !value.equals(assignExpr.getRight())) {
+                    !value.equals(assignExpr.getRight())) {
                     return;
                   }
                 }
@@ -219,8 +217,7 @@ public final class InitializerProcessor {
         for (List<Exprent> lst : lstFirst) {
           lst.remove(isAnonymous ? 0 : 1);
         }
-      }
-      else {
+      } else {
         return;
       }
     }
@@ -232,8 +229,8 @@ public final class InitializerProcessor {
 
     for (Exprent expr : lst) {
       switch (expr.type) {
-        case Exprent.EXPRENT_VAR -> {
-          VarVersionPair varPair = new VarVersionPair((VarExprent)expr);
+        case Exprent.EXPRENT_VAR: {
+          VarVersionPair varPair = new VarVersionPair((VarExprent) expr);
           if (!method.varproc.getExternalVars().contains(varPair)) {
             String varName = method.varproc.getVarName(varPair);
             if (!varName.equals("this") && !varName.endsWith(".this")) { // FIXME: remove direct comparison with strings
@@ -241,7 +238,8 @@ public final class InitializerProcessor {
             }
           }
         }
-        case Exprent.EXPRENT_FIELD -> {
+        break;
+        case Exprent.EXPRENT_FIELD: {
           return false;
         }
       }

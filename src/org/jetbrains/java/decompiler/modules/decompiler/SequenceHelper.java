@@ -36,7 +36,7 @@ public final class SequenceHelper {
         Statement st = lst.get(i);
         if (st.type == StatementType.SEQUENCE) {
 
-          removeEmptyStatements((SequenceStatement)st);
+          removeEmptyStatements((SequenceStatement) st);
 
           if (i == lst.size() - 1 || isSequenceDisbandable(st, lst.get(i + 1))) {
             // move predecessors
@@ -51,15 +51,13 @@ public final class SequenceHelper {
             Statement last = st.getStats().getLast();
             if (last.getAllSuccessorEdges().isEmpty() && i < lst.size() - 1) {
               last.addSuccessor(new StatEdge(EdgeType.REGULAR, last, lst.get(i + 1)));
-            }
-            else {
+            } else {
               for (StatEdge edge : last.getAllSuccessorEdges()) {
                 if (i == lst.size() - 1) {
                   if (edge.closure == st) {
                     stat.addLabeledEdge(edge);
                   }
-                }
-                else {
+                } else {
                   edge.getSource().changeEdgeType(EdgeDirection.FORWARD, edge, EdgeType.REGULAR);
                   edge.closure.getLabelEdges().remove(edge);
                   edge.closure = null;
@@ -99,7 +97,7 @@ public final class SequenceHelper {
     // sequence consisting of one statement -> disband
     if (stat.type == StatementType.SEQUENCE) {
 
-      removeEmptyStatements((SequenceStatement)stat);
+      removeEmptyStatements((SequenceStatement) stat);
 
       if (stat.getStats().size() == 1) {
 
@@ -189,8 +187,7 @@ public final class SequenceHelper {
               }
               found = true;
             }
-          }
-          else {
+          } else {
             StatEdge sucedge = st.getAllSuccessorEdges().get(0);
             if (sucedge.getType() != EdgeType.FINALLY_EXIT) {
               st.removeSuccessor(sucedge);
@@ -246,8 +243,7 @@ public final class SequenceHelper {
             next.getExprents().addAll(0, current.getExprents());
             current.getExprents().clear();
             found = true;
-          }
-          else {
+          } else {
             Statement first = getFirstExprentlist(next);
             if (first != null) {
               first.getExprents().addAll(0, current.getExprents());
@@ -270,10 +266,15 @@ public final class SequenceHelper {
       return stat;
     }
 
-    return switch (stat.type) {
-      case IF, SEQUENCE, SWITCH, SYNCHRONIZED -> getFirstExprentlist(stat.getFirst());
-      default -> null;
-    };
+    switch (stat.type) {
+      case IF:
+      case SEQUENCE:
+      case SWITCH:
+      case SYNCHRONIZED:
+        return getFirstExprentlist(stat.getFirst());
+      default:
+        return null;
+    }
   }
 
 
@@ -285,8 +286,7 @@ public final class SequenceHelper {
       DecompilerContext.getCounterContainer().getCounterAndIncrement(CounterContainer.STATEMENT_COUNTER)));
     if (stat.getExprents() == null) {
       bstat.setExprents(new ArrayList<>());
-    }
-    else {
+    } else {
       bstat.setExprents(DecHelper.copyExprentList(stat.getExprents()));
     }
 

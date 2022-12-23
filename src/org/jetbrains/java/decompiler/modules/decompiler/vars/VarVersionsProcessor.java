@@ -97,7 +97,7 @@ public class VarVersionsProcessor {
 
       for (Exprent expr : lst) {
         if (expr.type == Exprent.EXPRENT_VAR) {
-          VarExprent var = (VarExprent)expr;
+          VarExprent var = (VarExprent) expr;
           Integer version = versions.get(new VarVersionPair(var));
           if (version != null) {
             var.setVersion(version);
@@ -120,15 +120,13 @@ public class VarVersionsProcessor {
       if (type.getType() == CodeConstants.TYPE_BYTECHAR || type.getType() == CodeConstants.TYPE_SHORTCHAR) {
         if (maxType != null && maxType.getType() == CodeConstants.TYPE_CHAR) {
           type = VarType.VARTYPE_CHAR;
-        }
-        else {
+        } else {
           type = type.getType() == CodeConstants.TYPE_BYTECHAR ? VarType.VARTYPE_BYTE : VarType.VARTYPE_SHORT;
         }
         mapExprentMinTypes.put(paar, type);
         //} else if(type.type == CodeConstants.TYPE_CHAR && (maxType == null || maxType.type == CodeConstants.TYPE_INT)) { // when possible, lift char to int
         //	mapExprentMinTypes.put(paar, VarType.VARTYPE_INT);
-      }
-      else if (type.getType() == CodeConstants.TYPE_NULL) {
+      } else if (type.getType() == CodeConstants.TYPE_NULL) {
         mapExprentMinTypes.put(paar, VarType.VARTYPE_OBJECT);
       }
     }
@@ -169,38 +167,78 @@ public class VarVersionsProcessor {
             VarType secondType = mapExprentMinTypes.get(secondPair);
 
             if (firstType.equals(secondType) ||
-                firstType.equals(VarType.VARTYPE_NULL) && secondType.getType() == CodeConstants.TYPE_OBJECT ||
-                secondType.equals(VarType.VARTYPE_NULL) && firstType.getType() == CodeConstants.TYPE_OBJECT ||
-                firstType.getTypeFamily() == CodeConstants.TYPE_FAMILY_INTEGER && secondType.getTypeFamily() == CodeConstants.TYPE_FAMILY_INTEGER) {
+              firstType.equals(VarType.VARTYPE_NULL) && secondType.getType() == CodeConstants.TYPE_OBJECT ||
+              secondType.equals(VarType.VARTYPE_NULL) && firstType.getType() == CodeConstants.TYPE_OBJECT ||
+              firstType.getTypeFamily() == CodeConstants.TYPE_FAMILY_INTEGER && secondType.getTypeFamily() == CodeConstants.TYPE_FAMILY_INTEGER) {
               VarType firstMaxType = mapExprentMaxTypes.get(firstPair);
               VarType secondMaxType = mapExprentMaxTypes.get(secondPair);
               VarType type = firstMaxType == null ? secondMaxType :
-                             secondMaxType == null ? firstMaxType :
-                             VarType.getCommonMinType(firstMaxType, secondMaxType);
+                secondMaxType == null ? firstMaxType :
+                  VarType.getCommonMinType(firstMaxType, secondMaxType);
 
               if (firstType.getTypeFamily() == CodeConstants.TYPE_FAMILY_INTEGER && secondType.getTypeFamily() == CodeConstants.TYPE_FAMILY_INTEGER) {
-                type = switch (secondType.getType()) {
-                  case CodeConstants.TYPE_INT -> VarType.VARTYPE_INT;
-                  case CodeConstants.TYPE_SHORT -> firstType.getType() == CodeConstants.TYPE_INT ? null : VarType.VARTYPE_SHORT;
-                  case CodeConstants.TYPE_CHAR -> switch (firstType.getType()) {
-                    case CodeConstants.TYPE_INT, CodeConstants.TYPE_SHORT -> null;
-                    default -> VarType.VARTYPE_CHAR;
-                  };
-                  case CodeConstants.TYPE_SHORTCHAR -> switch (firstType.getType()) {
-                    case CodeConstants.TYPE_INT, CodeConstants.TYPE_SHORT, CodeConstants.TYPE_CHAR -> null;
-                    default -> VarType.VARTYPE_SHORTCHAR;
-                  };
-                  case CodeConstants.TYPE_BYTECHAR -> switch (firstType.getType()) {
-                    case CodeConstants.TYPE_INT, CodeConstants.TYPE_SHORT, CodeConstants.TYPE_CHAR, CodeConstants.TYPE_SHORTCHAR -> null;
-                    default -> VarType.VARTYPE_BYTECHAR;
-                  };
-                  case CodeConstants.TYPE_BYTE -> switch (firstType.getType()) {
-                    case CodeConstants.TYPE_INT, CodeConstants.TYPE_SHORT, CodeConstants.TYPE_CHAR, CodeConstants.TYPE_SHORTCHAR, CodeConstants.TYPE_BYTECHAR ->
-                      null;
-                    default -> VarType.VARTYPE_BYTE;
-                  };
-                  default -> type;
-                };
+                switch (secondType.getType()) {
+                  case CodeConstants.TYPE_INT:
+                    type = VarType.VARTYPE_INT;
+                    break;
+                  case CodeConstants.TYPE_SHORT:
+                    type = firstType.getType() == CodeConstants.TYPE_INT ? null : VarType.VARTYPE_SHORT;
+                    break;
+                  case CodeConstants.TYPE_CHAR:
+                    switch (firstType.getType()) {
+                      case CodeConstants.TYPE_INT:
+                      case CodeConstants.TYPE_SHORT:
+                        type = null;
+                        break;
+                      default:
+                        type = VarType.VARTYPE_CHAR;
+                        break;
+                    }
+                    break;
+                  case CodeConstants.TYPE_SHORTCHAR:
+                    switch (firstType.getType()) {
+                      case CodeConstants.TYPE_INT:
+                      case CodeConstants.TYPE_SHORT:
+                      case CodeConstants.TYPE_CHAR:
+                        type = null;
+                        break;
+                      default:
+                        type = VarType.VARTYPE_SHORTCHAR;
+                        break;
+                    }
+                    break;
+                  case CodeConstants.TYPE_BYTECHAR:
+                    switch (firstType.getType()) {
+                      case CodeConstants.TYPE_INT:
+                      case CodeConstants.TYPE_SHORT:
+                      case CodeConstants.TYPE_CHAR:
+                      case CodeConstants.TYPE_SHORTCHAR:
+                        type = null;
+                        break;
+                      default:
+                        type = VarType.VARTYPE_BYTECHAR;
+                        break;
+                    }
+                    break;
+                  case CodeConstants.TYPE_BYTE:
+                    switch (firstType.getType()) {
+                      case CodeConstants.TYPE_INT:
+                      case CodeConstants.TYPE_SHORT:
+                      case CodeConstants.TYPE_CHAR:
+                      case CodeConstants.TYPE_SHORTCHAR:
+                      case CodeConstants.TYPE_BYTECHAR:
+                        type =
+                          null;
+                        break;
+                      default:
+                        type = VarType.VARTYPE_BYTE;
+                        break;
+                    }
+                    break;
+                  default:
+                    break;
+                }
+                ;
                 if (type == null) {
                   continue;
                 }
@@ -271,17 +309,16 @@ public class VarVersionsProcessor {
 
       for (Exprent expr : lst) {
         if (expr.type == Exprent.EXPRENT_VAR) {
-          VarExprent newVar = (VarExprent)expr;
+          VarExprent newVar = (VarExprent) expr;
           Integer newVarIndex = mapVarPaar.get(new VarVersionPair(newVar));
           if (newVarIndex != null) {
             newVar.setIndex(newVarIndex);
             newVar.setVersion(0);
           }
-        }
-        else if (expr.type == Exprent.EXPRENT_CONST) {
+        } else if (expr.type == Exprent.EXPRENT_CONST) {
           VarType maxType = mapExprentMaxTypes.get(new VarVersionPair(expr.id, -1));
           if (maxType != null && maxType.equals(VarType.VARTYPE_CHAR)) {
-            ((ConstExprent)expr).setConstType(maxType);
+            ((ConstExprent) expr).setConstType(maxType);
           }
         }
       }
@@ -298,8 +335,7 @@ public class VarVersionsProcessor {
         value = oldValue != null ? oldValue : value;
         this.mapOriginalVarIndices.put(entry.getKey(), value);
       }
-    }
-    else {
+    } else {
       this.mapOriginalVarIndices = mapOriginalVarIndices;
     }
   }

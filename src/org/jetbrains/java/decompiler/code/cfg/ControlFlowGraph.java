@@ -56,7 +56,8 @@ public class ControlFlowGraph implements CodeConstants {
   }
 
   public String toString() {
-    if (blocks == null) return "Empty";
+    if (blocks == null)
+      return "Empty";
 
     String new_line_separator = DecompilerContext.getNewLineSeparator();
 
@@ -78,13 +79,11 @@ public class ControlFlowGraph implements CodeConstants {
         if (range == null) {
           buf.append(">>>>>>>>(exception) Block ").append(handler.id).append("\t").append("ERROR: range not found!")
             .append(new_line_separator);
-        }
-        else {
+        } else {
           List<String> exceptionTypes = range.getExceptionTypes();
           if (exceptionTypes == null) {
             buf.append(">>>>>>>>(exception) Block ").append(handler.id).append("\t").append("NULL").append(new_line_separator);
-          }
-          else {
+          } else {
             for (String exceptionType : exceptionTypes) {
               buf.append(">>>>>>>>(exception) Block ").append(handler.id).append("\t").append(exceptionType).append(new_line_separator);
             }
@@ -132,8 +131,7 @@ public class ControlFlowGraph implements CodeConstants {
       ExceptionRangeCFG range = exceptions.get(i);
       if (range.getHandler() == block) {
         exceptions.remove(i);
-      }
-      else {
+      } else {
         List<BasicBlock> lstRange = range.getProtectedRange();
         lstRange.remove(block);
 
@@ -230,14 +228,15 @@ public class ControlFlowGraph implements CodeConstants {
       Instruction instr = seq.getInstr(i);
       switch (instr.group) {
         case GROUP_JUMP:
-          inststates[((JumpInstruction)instr).destination] = 1;
+          inststates[((JumpInstruction) instr).destination] = 1;
+          break;
         case GROUP_RETURN:
           if (i + 1 < len) {
             inststates[i + 1] = 1;
           }
           break;
         case GROUP_SWITCH:
-          SwitchInstruction swinstr = (SwitchInstruction)instr;
+          SwitchInstruction swinstr = (SwitchInstruction) instr;
           int[] dests = swinstr.getDestinations();
           for (int j = dests.length - 1; j >= 0; j--) {
             inststates[dests[j]] = 1;
@@ -246,6 +245,7 @@ public class ControlFlowGraph implements CodeConstants {
           if (i + 1 < len) {
             inststates[i + 1] = 1;
           }
+          break;
       }
     }
 
@@ -307,21 +307,23 @@ public class ControlFlowGraph implements CodeConstants {
       BasicBlock bTemp;
 
       switch (instr.group) {
-        case GROUP_JUMP -> {
-          int dest = ((JumpInstruction)instr).destination;
+        case GROUP_JUMP: {
+          int dest = ((JumpInstruction) instr).destination;
           bTemp = mapInstrBlocks.get(dest);
           block.addSuccessor(bTemp);
         }
-        case GROUP_SWITCH -> {
-          SwitchInstruction sinstr = (SwitchInstruction)instr;
+        break;
+        case GROUP_SWITCH: {
+          SwitchInstruction sinstr = (SwitchInstruction) instr;
           int[] dests = sinstr.getDestinations();
 
-          bTemp = mapInstrBlocks.get(((SwitchInstruction)instr).getDefaultDestination());
+          bTemp = mapInstrBlocks.get(((SwitchInstruction) instr).getDefaultDestination());
           block.addSuccessor(bTemp);
           for (int dest1 : dests) {
             bTemp = mapInstrBlocks.get(dest1);
             block.addSuccessor(bTemp);
           }
+          break;
         }
       }
 
@@ -349,8 +351,7 @@ public class ControlFlowGraph implements CodeConstants {
       if (mapRanges.containsKey(key)) {
         ExceptionRangeCFG range = mapRanges.get(key);
         range.addExceptionType(handler.exceptionClass);
-      }
-      else {
+      } else {
 
         List<BasicBlock> protectedRange = new ArrayList<>();
         for (int j = from.id; j < to.id; j++) {
@@ -360,8 +361,8 @@ public class ControlFlowGraph implements CodeConstants {
         }
 
         ExceptionRangeCFG range = new ExceptionRangeCFG(protectedRange, handle, handler.exceptionClass == null
-                                                                                ? null
-                                                                                : Collections.singletonList(handler.exceptionClass));
+          ? null
+          : Collections.singletonList(handler.exceptionClass));
         mapRanges.put(key, range);
 
         exceptions.add(range);
@@ -393,8 +394,10 @@ public class ControlFlowGraph implements CodeConstants {
           setVisited.add(node);
 
           switch (node.getSeq().getLastInstr().opcode) {
-            case CodeConstants.opc_jsr -> jsrstack.add(node);
-            case CodeConstants.opc_ret -> {
+            case CodeConstants.opc_jsr:
+              jsrstack.add(node);
+              break;
+            case CodeConstants.opc_ret: {
               BasicBlock enter = jsrstack.getLast();
               BasicBlock exit = blocks.getWithKey(enter.id + 1); // FIXME: find successor in a better way
 
@@ -404,11 +407,11 @@ public class ControlFlowGraph implements CodeConstants {
                 }
                 jsrstack.removeLast();
                 subroutines.put(enter, exit);
-              }
-              else {
+              } else {
                 throw new RuntimeException("ERROR: last instruction jsr");
               }
             }
+            break;
           }
 
           if (!jsrstack.isEmpty()) {
@@ -428,7 +431,8 @@ public class ControlFlowGraph implements CodeConstants {
 
   private void processJsr() {
     while (true) {
-      if (processJsrRanges() == 0) break;
+      if (processJsrRanges() == 0)
+        break;
     }
   }
 
@@ -516,8 +520,7 @@ public class ControlFlowGraph implements CodeConstants {
             }
           }
           lst = node.getSuccessors();
-        }
-        else {
+        } else {
           if (node == jsr) {
             continue;
           }
@@ -579,8 +582,7 @@ public class ControlFlowGraph implements CodeConstants {
             }
           }
           lst = node.getSuccessors();
-        }
-        else {
+        } else {
           if (node == jsr) {
             continue;
           }
@@ -595,16 +597,14 @@ public class ControlFlowGraph implements CodeConstants {
 
           if (mapNewNodes.containsKey(childid)) {
             node.replaceSuccessor(child, mapNewNodes.get(childid));
-          }
-          else if (common_blocks.contains(child)) {
+          } else if (common_blocks.contains(child)) {
             // make a copy of the current block
             BasicBlock copy = child.clone(++last_id);
             // copy all successors
             if (copy.getLastInstruction().opcode == CodeConstants.opc_ret && child.getSuccessors().contains(ret)) {
               copy.addSuccessor(ret);
               child.removeSuccessor(ret);
-            }
-            else {
+            } else {
               for (int k = 0; k < child.getSuccessors().size(); k++) {
                 copy.addSuccessor(child.getSuccessors().get(k));
               }
@@ -622,8 +622,7 @@ public class ControlFlowGraph implements CodeConstants {
 
             node.replaceSuccessor(child, copy);
             blocks.addWithKey(copy, copy.id);
-          }
-          else {
+          } else {
             // stop at the first fixed node
             //lstNodes.add(child);
             mapNewNodes.put(childid, child);
@@ -652,10 +651,9 @@ public class ControlFlowGraph implements CodeConstants {
         if (setBoth.size() == lstRange.size()) {
           lstNewRange = new ArrayList<>();
           ExceptionRangeCFG newRange = new ExceptionRangeCFG(lstNewRange,
-                                                             mapNewNodes.get(range.getHandler().id), range.getExceptionTypes());
+            mapNewNodes.get(range.getHandler().id), range.getExceptionTypes());
           exceptions.add(newRange);
-        }
-        else {
+        } else {
           lstNewRange = lstRange;
         }
 
@@ -685,11 +683,14 @@ public class ControlFlowGraph implements CodeConstants {
       InstructionImpact.stepTypes(data, instr, pool);
 
       switch (instr.opcode) {
-        case CodeConstants.opc_jsr, CodeConstants.opc_ret -> {
+        case CodeConstants.opc_jsr:
+        case CodeConstants.opc_ret: {
           seq.removeInstruction(i);
           i--;
         }
-        case CodeConstants.opc_astore, CodeConstants.opc_pop -> {
+        break;
+        case CodeConstants.opc_astore:
+        case CodeConstants.opc_pop: {
           if (var.getType() == CodeConstants.TYPE_ADDRESS) {
             seq.removeInstruction(i);
             i--;

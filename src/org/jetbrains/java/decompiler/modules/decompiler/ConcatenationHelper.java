@@ -30,19 +30,17 @@ public final class ConcatenationHelper {
 
     // first quick test
     if (expr.type == Exprent.EXPRENT_INVOCATION) {
-      InvocationExprent iex = (InvocationExprent)expr;
+      InvocationExprent iex = (InvocationExprent) expr;
       if ("toString".equals(iex.getName())) {
         if (builderClass.equals(iex.getClassName())) {
           cltype = builderType;
-        }
-        else if (bufferClass.equals(iex.getClassName())) {
+        } else if (bufferClass.equals(iex.getClassName())) {
           cltype = bufferType;
         }
         if (cltype != null) {
           exprTmp = iex.getInstance();
         }
-      }
-      else if ("makeConcatWithConstants".equals(iex.getName())) { // java 9 style
+      } else if ("makeConcatWithConstants".equals(iex.getName())) { // java 9 style
         List<Exprent> parameters = extractParameters(iex.getBootstrapArguments(), iex);
         if (parameters.size() >= 2) {
           return createConcatExprent(parameters, expr.bytecode);
@@ -63,16 +61,17 @@ public final class ConcatenationHelper {
       int found = 0;
 
       switch (exprTmp.type) {
-        case Exprent.EXPRENT_INVOCATION -> {
-          InvocationExprent iex = (InvocationExprent)exprTmp;
+        case Exprent.EXPRENT_INVOCATION: {
+          InvocationExprent iex = (InvocationExprent) exprTmp;
           if (isAppendConcat(iex, cltype)) {
             lstOperands.add(0, iex.getParameters().get(0));
             exprTmp = iex.getInstance();
             found = 1;
           }
         }
-        case Exprent.EXPRENT_NEW -> {
-          NewExprent nex = (NewExprent)exprTmp;
+        break;
+        case Exprent.EXPRENT_NEW: {
+          NewExprent nex = (NewExprent) exprTmp;
           if (isNewConcat(nex, cltype)) {
             VarType[] params = nex.getConstructor().getDescriptor().params;
             if (params.length == 1) {
@@ -81,12 +80,12 @@ public final class ConcatenationHelper {
             found = 2;
           }
         }
+        break;
       }
 
       if (found == 0) {
         return expr;
-      }
-      else if (found == 2) {
+      } else if (found == 2) {
         break;
       }
     }
@@ -145,7 +144,7 @@ public final class ConcatenationHelper {
     if (bootstrapArguments != null) {
       PooledConstant constant = bootstrapArguments.get(0);
       if (constant.type == CodeConstants.CONSTANT_String) {
-        String recipe = ((PrimitiveConstant)constant).getString();
+        String recipe = ((PrimitiveConstant) constant).getString();
 
         List<Exprent> res = new ArrayList<>();
         StringBuilder acc = new StringBuilder();
@@ -185,8 +184,7 @@ public final class ConcatenationHelper {
 
               res.add(exprent);
             }
-          }
-          else {
+          } else {
             // Not a special characters, this is a constant embedded into
             // the recipe itself.
             acc.append(c);
@@ -226,7 +224,7 @@ public final class ConcatenationHelper {
         switch (param.getType()) {
           case CodeConstants.TYPE_OBJECT:
             if (!param.equals(VarType.VARTYPE_STRING) &&
-                !param.equals(VarType.VARTYPE_OBJECT)) {
+              !param.equals(VarType.VARTYPE_OBJECT)) {
               break;
             }
           case CodeConstants.TYPE_BOOLEAN:
@@ -240,7 +238,6 @@ public final class ConcatenationHelper {
         }
       }
     }
-
     return false;
   }
 
@@ -256,7 +253,7 @@ public final class ConcatenationHelper {
   private static Exprent removeStringValueOf(Exprent exprent) {
 
     if (exprent.type == Exprent.EXPRENT_INVOCATION) {
-      InvocationExprent iex = (InvocationExprent)exprent;
+      InvocationExprent iex = (InvocationExprent) exprent;
       if ("valueOf".equals(iex.getName()) && ClassNameConstants.JAVA_LANG_STRING.equals(iex.getClassName())) {
         MethodDescriptor md = iex.getDescriptor();
         if (md.params.length == 1) {

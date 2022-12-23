@@ -96,8 +96,8 @@ public class FlattenStatementsHelper {
       if (statEntry.succEdges == null) {
 
         switch (stat.type) {
-          case BASIC_BLOCK -> {
-            node = new DirectNode(DirectNodeType.DIRECT, stat, (BasicBlockStatement)stat);
+          case BASIC_BLOCK: {
+            node = new DirectNode(DirectNodeType.DIRECT, stat, (BasicBlockStatement) stat);
             if (stat.getExprents() != null) {
               node.exprents = stat.getExprents();
             }
@@ -125,7 +125,9 @@ public class FlattenStatementsHelper {
               mapPosIfBranch.put(sourcenode.id, lstSuccEdges.get(0).getDestination().id);
             }
           }
-          case CATCH_ALL, TRY_CATCH -> {
+          break;
+          case CATCH_ALL:
+          case TRY_CATCH: {
             DirectNode firstnd = new DirectNode(DirectNodeType.TRY, stat, stat.id + "_try");
 
             mapDestinationNodes.put(stat.id, new String[]{firstnd.id, null});
@@ -137,15 +139,14 @@ public class FlattenStatementsHelper {
               listEdges.add(new Edge(firstnd.id, st.id, EdgeType.REGULAR));
 
               LinkedList<StackEntry> stack = stackFinally;
-              if (stat.type == StatementType.CATCH_ALL && ((CatchAllStatement)stat).isFinally()) {
+              if (stat.type == StatementType.CATCH_ALL && ((CatchAllStatement) stat).isFinally()) {
                 stack = new LinkedList<>(stackFinally);
 
                 if (st == stat.getFirst()) { // catch head
-                  stack.add(new StackEntry((CatchAllStatement)stat, Boolean.FALSE));
-                }
-                else { // handler
-                  stack.add(new StackEntry((CatchAllStatement)stat, Boolean.TRUE, EdgeType.BREAK,
-                                           root.getDummyExit(), st, st, firstnd, firstnd, true));
+                  stack.add(new StackEntry((CatchAllStatement) stat, Boolean.FALSE));
+                } else { // handler
+                  stack.add(new StackEntry((CatchAllStatement) stat, Boolean.TRUE, EdgeType.BREAK,
+                    root.getDummyExit(), st, st, firstnd, firstnd, true));
                 }
               }
               lst.add(new StatementStackEntry(st, stack, null));
@@ -153,7 +154,8 @@ public class FlattenStatementsHelper {
 
             lstStackStatements.addAll(0, lst);
           }
-          case DO -> {
+          break;
+          case DO: {
             if (statementBreakIndex == 0) {
               statEntry.statementIndex = 1;
               lstStackStatements.addFirst(statEntry);
@@ -164,7 +166,7 @@ public class FlattenStatementsHelper {
 
             nd = graph.nodes.getWithKey(mapDestinationNodes.get(stat.getFirst().id)[0]);
 
-            DoStatement dostat = (DoStatement)stat;
+            DoStatement dostat = (DoStatement) stat;
             LoopType loopType = dostat.getLoopType();
 
             if (loopType == LoopType.DO) {
@@ -175,7 +177,8 @@ public class FlattenStatementsHelper {
             lstSuccEdges.add(stat.getSuccessorEdges(EdgeType.DIRECT_ALL).get(0));  // exactly one edge
 
             switch (loopType) {
-              case WHILE, DO_WHILE -> {
+              case WHILE:
+              case DO_WHILE: {
                 node = new DirectNode(DirectNodeType.CONDITION, stat, stat.id + "_cond");
                 node.exprents = dostat.getConditionExprentList();
                 graph.nodes.putWithKey(node, node.id);
@@ -184,8 +187,7 @@ public class FlattenStatementsHelper {
 
                 if (loopType == LoopType.WHILE) {
                   mapDestinationNodes.put(stat.id, new String[]{node.id, node.id});
-                }
-                else {
+                } else {
                   mapDestinationNodes.put(stat.id, new String[]{nd.id, node.id});
 
                   boolean found = false;
@@ -201,7 +203,8 @@ public class FlattenStatementsHelper {
                 }
                 sourcenode = node;
               }
-              case FOR -> {
+              break;
+              case FOR: {
                 DirectNode nodeinit = new DirectNode(DirectNodeType.INIT, stat, stat.id + "_init");
                 if (dostat.getInitExprent() != null) {
                   nodeinit.exprents = dostat.getInitExprentList();
@@ -238,26 +241,39 @@ public class FlattenStatementsHelper {
               }
             }
           }
-          case SYNCHRONIZED, SWITCH, IF, SEQUENCE, ROOT -> {
+          break;
+          case SYNCHRONIZED:
+          case SWITCH:
+          case IF:
+          case SEQUENCE:
+          case ROOT: {
             int statsize = stat.getStats().size();
             if (stat.type == StatementType.SYNCHRONIZED) {
               statsize = 2;  // exclude the handler if synchronized
             }
 
             if (statementBreakIndex <= statsize) {
-              List<Exprent> tailexprlst = switch (stat.type) {
-                case SYNCHRONIZED -> ((SynchronizedStatement)stat).getHeadexprentList();
-                case SWITCH -> ((SwitchStatement)stat).getHeadExprentList();
-                case IF -> ((IfStatement)stat).getHeadexprentList();
-                default -> null;
-              };
-
+              List<Exprent> tailexprlst;
+              switch (stat.type) {
+                case SYNCHRONIZED:
+                  tailexprlst = ((SynchronizedStatement) stat).getHeadexprentList();
+                  break;
+                case SWITCH:
+                  tailexprlst = ((SwitchStatement) stat).getHeadExprentList();
+                  break;
+                case IF:
+                  tailexprlst = ((IfStatement) stat).getHeadexprentList();
+                  break;
+                default:
+                  tailexprlst = null;
+                  break;
+              }
               for (int i = statementBreakIndex; i < statsize; i++) {
                 statEntry.statementIndex = i + 1;
                 lstStackStatements.addFirst(statEntry);
                 lstStackStatements.addFirst(
                   new StatementStackEntry(stat.getStats().get(i), stackFinally,
-                                          (i == 0 && tailexprlst != null && tailexprlst.get(0) != null) ? tailexprlst : null));
+                    (i == 0 && tailexprlst != null && tailexprlst.get(0) != null) ? tailexprlst : null));
 
                 continue mainloop;
               }
@@ -265,12 +281,13 @@ public class FlattenStatementsHelper {
               node = graph.nodes.getWithKey(mapDestinationNodes.get(stat.getFirst().id)[0]);
               mapDestinationNodes.put(stat.id, new String[]{node.id, null});
 
-              if (stat.type == StatementType.IF && ((IfStatement)stat).iftype == IfStatement.IFTYPE_IF) {
+              if (stat.type == StatementType.IF && ((IfStatement) stat).iftype == IfStatement.IFTYPE_IF) {
                 lstSuccEdges.add(stat.getSuccessorEdges(EdgeType.DIRECT_ALL).get(0));  // exactly one edge
                 sourcenode = tailexprlst.get(0) == null ? node : graph.nodes.getWithKey(node.id + "_tail");
               }
             }
           }
+          break;
         }
       }
 
@@ -310,9 +327,8 @@ public class FlattenStatementsHelper {
 
             if (entry == null) {
               saveEdge(sourcenode, destination, edgetype, isFinallyExit ? finallyShortRangeSource : null, finallyLongRangeSource,
-                       finallyShortRangeEntry, finallyLongRangeEntry, isFinallyMonitorExceptionPath);
-            }
-            else {
+                finallyShortRangeEntry, finallyLongRangeEntry, isFinallyMonitorExceptionPath);
+            } else {
 
               CatchAllStatement catchall = entry.catchstatement;
 
@@ -332,27 +348,24 @@ public class FlattenStatementsHelper {
                   isFinallyMonitorExceptionPath = (catchall.getMonitor() != null) & entry.isFinallyExceptionPath;
 
                   created = false;
-                }
-                else {
+                } else {
                   if (!catchall.containsStatementStrict(destination)) {
                     stack.removeLast();
                     created = false;
-                  }
-                  else {
+                  } else {
                     saveEdge(sourcenode, destination, edgetype, isFinallyExit ? finallyShortRangeSource : null, finallyLongRangeSource,
-                             finallyShortRangeEntry, finallyLongRangeEntry, isFinallyMonitorExceptionPath);
+                      finallyShortRangeEntry, finallyLongRangeEntry, isFinallyMonitorExceptionPath);
                   }
                 }
-              }
-              else { // finally protected try statement
+              } else { // finally protected try statement
                 if (!catchall.containsStatementStrict(destination)) {
                   saveEdge(sourcenode, catchall.getHandler(), EdgeType.REGULAR, isFinallyExit ? finallyShortRangeSource : null,
-                           finallyLongRangeSource, finallyShortRangeEntry, finallyLongRangeEntry, isFinallyMonitorExceptionPath);
+                    finallyLongRangeSource, finallyShortRangeEntry, finallyLongRangeEntry, isFinallyMonitorExceptionPath);
 
                   stack.removeLast();
                   stack.add(new StackEntry(catchall, Boolean.TRUE, edgetype, destination, catchall.getHandler(),
-                                           finallyLongRangeEntry == null ? catchall.getHandler() : finallyLongRangeEntry,
-                                           sourcenode, finallyLongRangeSource, false));
+                    finallyLongRangeEntry == null ? catchall.getHandler() : finallyLongRangeEntry,
+                    sourcenode, finallyLongRangeSource, false));
 
                   statEntry.edgeIndex = edgeindex + 1;
                   statEntry.succEdges = lstSuccEdges;
@@ -360,10 +373,9 @@ public class FlattenStatementsHelper {
                   lstStackStatements.addFirst(new StatementStackEntry(catchall.getHandler(), stack, null));
 
                   continue mainloop;
-                }
-                else {
+                } else {
                   saveEdge(sourcenode, destination, edgetype, isFinallyExit ? finallyShortRangeSource : null, finallyLongRangeSource,
-                           finallyShortRangeEntry, finallyLongRangeEntry, isFinallyMonitorExceptionPath);
+                    finallyShortRangeEntry, finallyLongRangeEntry, isFinallyMonitorExceptionPath);
                 }
               }
             }
@@ -454,8 +466,8 @@ public class FlattenStatementsHelper {
 
         if (!newLst.isEmpty()) {
           (i == 0 ? graph.mapShortRangeFinallyPaths : graph.mapLongRangeFinallyPaths).put(ent.getKey(),
-                                                                                          new ArrayList<>(
-                                                                                            new HashSet<>(newLst)));
+            new ArrayList<>(
+              new HashSet<>(newLst)));
         }
       }
     }
@@ -478,10 +490,12 @@ public class FlattenStatementsHelper {
 
     @Override
     public boolean equals(Object o) {
-      if (o == this) return true;
-      if (!(o instanceof FinallyPathWrapper)) return false;
+      if (o == this)
+        return true;
+      if (!(o instanceof FinallyPathWrapper))
+        return false;
 
-      FinallyPathWrapper fpw = (FinallyPathWrapper)o;
+      FinallyPathWrapper fpw = (FinallyPathWrapper) o;
       return (source + ":" + destination + ":" + entry).equals(fpw.source + ":" + fpw.destination + ":" + fpw.entry);
     }
 

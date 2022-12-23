@@ -92,8 +92,7 @@ public abstract class Statement implements IMatchable {
     List<T> lst = map.get(EdgeType.DIRECT_ALL);
     if (lst != null) {
       map.put(EdgeType.ALL, new ArrayList<>(lst));
-    }
-    else {
+    } else {
       map.remove(EdgeType.ALL);
     }
   }
@@ -119,7 +118,7 @@ public abstract class Statement implements IMatchable {
     for (StatEdge prededge : head.getAllPredecessorEdges()) {
 
       if (prededge.getType() != EdgeType.EXCEPTION &&
-          stat.containsStatementStrict(prededge.getSource())) {
+        stat.containsStatementStrict(prededge.getSource())) {
         prededge.getSource().changeEdgeType(EdgeDirection.FORWARD, prededge, EdgeType.CONTINUE);
         stat.addLabeledEdge(prededge);
       }
@@ -161,7 +160,7 @@ public abstract class Statement implements IMatchable {
     }
 
     if (post != null &&
-        !stat.getNeighbours(EdgeType.EXCEPTION, EdgeDirection.FORWARD).contains(post)) { // TODO: second condition redundant?
+      !stat.getNeighbours(EdgeType.EXCEPTION, EdgeDirection.FORWARD).contains(post)) { // TODO: second condition redundant?
       stat.addSuccessor(new StatEdge(EdgeType.REGULAR, stat, post));
     }
 
@@ -182,7 +181,7 @@ public abstract class Statement implements IMatchable {
 
     if (stat.type == StatementType.SWITCH) {
       // special case switch, sorting leaf nodes
-      ((SwitchStatement)stat).sortEdgesAndNodes();
+      ((SwitchStatement) stat).sortEdgesAndNodes();
     }
   }
 
@@ -216,8 +215,7 @@ public abstract class Statement implements IMatchable {
     EdgeType[] arrtypes;
     if (type == EdgeType.EXCEPTION) {
       arrtypes = new EdgeType[]{EdgeType.ALL, EdgeType.EXCEPTION};
-    }
-    else {
+    } else {
       arrtypes = new EdgeType[]{EdgeType.ALL, EdgeType.DIRECT_ALL, type};
     }
 
@@ -248,8 +246,7 @@ public abstract class Statement implements IMatchable {
     EdgeType[] arrtypes;
     if (type == EdgeType.EXCEPTION) {
       arrtypes = new EdgeType[]{EdgeType.ALL, EdgeType.EXCEPTION};
-    }
-    else {
+    } else {
       arrtypes = new EdgeType[]{EdgeType.ALL, EdgeType.DIRECT_ALL, type};
     }
 
@@ -341,7 +338,7 @@ public abstract class Statement implements IMatchable {
 
     switch (type) {
       case BASIC_BLOCK:
-        BasicBlockStatement bblock = (BasicBlockStatement)this;
+        BasicBlockStatement bblock = (BasicBlockStatement) this;
         InstructionSequence seq = bblock.getBlock().getSeq();
 
         if (seq != null && seq.length() > 0) {
@@ -488,12 +485,10 @@ public abstract class Statement implements IMatchable {
       StatEdge edge = lst.get(i);
       if (edge.getSource() != newstat) {
         newstat.addLabeledEdge(edge);
-      }
-      else {
+      } else {
         if (this == edge.getDestination() || this.containsStatementStrict(edge.getDestination())) {
           edge.closure = null;
-        }
-        else {
+        } else {
           this.addLabeledEdge(edge);
         }
       }
@@ -530,7 +525,7 @@ public abstract class Statement implements IMatchable {
         Statement succ = edge.getDestination();
 
         if (!setVisited.contains(succ) &&
-            (edge.getType() == EdgeType.REGULAR || edge.getType() == EdgeType.EXCEPTION)) { // TODO: edge filter?
+          (edge.getType() == EdgeType.REGULAR || edge.getType() == EdgeType.EXCEPTION)) { // TODO: edge filter?
 
           stackIndex.add(index + 1);
 
@@ -581,8 +576,7 @@ public abstract class Statement implements IMatchable {
     EdgeType[] arrtypes;
     if (type == EdgeType.EXCEPTION) {
       arrtypes = new EdgeType[]{EdgeType.ALL, EdgeType.EXCEPTION};
-    }
-    else {
+    } else {
       arrtypes = new EdgeType[]{EdgeType.ALL, EdgeType.DIRECT_ALL, type};
     }
 
@@ -598,8 +592,7 @@ public abstract class Statement implements IMatchable {
 
     if (direction == EdgeDirection.BACKWARD) {
       edge.setSource(value);
-    }
-    else {
+    } else {
       edge.setDestination(value);
     }
   }
@@ -634,8 +627,7 @@ public abstract class Statement implements IMatchable {
     if ((type.mask() & (type.mask() - 1)) == 0) {
       res = map.get(type);
       res = res == null ? new ArrayList<>() : new ArrayList<>(res);
-    }
-    else {
+    } else {
       res = new ArrayList<>();
       for (EdgeType edgetype : EdgeType.types()) {
         if ((type.mask() & edgetype.mask()) != 0) {
@@ -658,8 +650,7 @@ public abstract class Statement implements IMatchable {
     if ((type.mask() & (type.mask() - 1)) == 0) {
       res = map.get(type);
       res = res == null ? new ArrayList<>() : new ArrayList<>(res);
-    }
-    else {
+    } else {
       res = new ArrayList<>();
       for (EdgeType edgetype : EdgeType.types()) {
         if ((type.mask() & edgetype.mask()) != 0) {
@@ -728,9 +719,8 @@ public abstract class Statement implements IMatchable {
 
   public BasicBlockStatement getBasichead() {
     if (type == StatementType.BASIC_BLOCK) {
-      return (BasicBlockStatement)this;
-    }
-    else {
+      return (BasicBlockStatement) this;
+    } else {
       return first.getBasichead();
     }
   }
@@ -750,8 +740,8 @@ public abstract class Statement implements IMatchable {
     // FIXME: default switch
 
     return type == StatementType.BASIC_BLOCK || (type == StatementType.IF &&
-                                                        ((IfStatement)this).iftype == IfStatement.IFTYPE_IF) ||
-           (type == StatementType.DO && ((DoStatement)this).getLoopType() != LoopType.DO);
+      ((IfStatement) this).iftype == IfStatement.IFTYPE_IF) ||
+      (type == StatementType.DO && ((DoStatement) this).getLoopType() != LoopType.DO);
   }
 
 
@@ -801,24 +791,21 @@ public abstract class Statement implements IMatchable {
     int node_type = matchNode.getType();
 
     if (node_type == MatchNode.MATCHNODE_STATEMENT && !this.stats.isEmpty()) {
-      String position = (String)matchNode.getRuleValue(MatchProperties.STATEMENT_POSITION);
+      String position = (String) matchNode.getRuleValue(MatchProperties.STATEMENT_POSITION);
       if (position != null) {
         if (position.matches("-?\\d+")) {
           return this.stats.get((this.stats.size() + Integer.parseInt(position)) % this.stats.size()); // care for negative positions
         }
-      }
-      else if (index < this.stats.size()) { // use 'index' parameter
+      } else if (index < this.stats.size()) { // use 'index' parameter
         return this.stats.get(index);
       }
-    }
-    else if (node_type == MatchNode.MATCHNODE_EXPRENT && this.exprents != null && !this.exprents.isEmpty()) {
-      String position = (String)matchNode.getRuleValue(MatchProperties.EXPRENT_POSITION);
+    } else if (node_type == MatchNode.MATCHNODE_EXPRENT && this.exprents != null && !this.exprents.isEmpty()) {
+      String position = (String) matchNode.getRuleValue(MatchProperties.EXPRENT_POSITION);
       if (position != null) {
         if (position.matches("-?\\d+")) {
           return this.exprents.get((this.exprents.size() + Integer.parseInt(position)) % this.exprents.size()); // care for negative positions
         }
-      }
-      else if (index < this.exprents.size()) { // use 'index' parameter
+      } else if (index < this.exprents.size()) { // use 'index' parameter
         return this.exprents.get(index);
       }
     }
@@ -834,34 +821,37 @@ public abstract class Statement implements IMatchable {
 
     for (Entry<MatchProperties, RuleValue> rule : matchNode.getRules().entrySet()) {
       switch (rule.getKey()) {
-        case STATEMENT_TYPE -> {
+        case STATEMENT_TYPE: {
           if (this.type != rule.getValue().value) {
             return false;
           }
         }
-        case STATEMENT_STATSIZE -> {
-          if (this.stats.size() != (Integer)rule.getValue().value) {
+        break;
+        case STATEMENT_STATSIZE: {
+          if (this.stats.size() != (Integer) rule.getValue().value) {
             return false;
           }
         }
-        case STATEMENT_EXPRSIZE -> {
-          int exprsize = (Integer)rule.getValue().value;
+        break;
+        case STATEMENT_EXPRSIZE: {
+          int exprsize = (Integer) rule.getValue().value;
           if (exprsize == -1) {
             if (this.exprents != null) {
               return false;
             }
-          }
-          else {
+          } else {
             if (this.exprents == null || this.exprents.size() != exprsize) {
               return false;
             }
           }
         }
-        case STATEMENT_RET -> {
-          if (!engine.checkAndSetVariableValue((String)rule.getValue().value, this)) {
+        break;
+        case STATEMENT_RET: {
+          if (!engine.checkAndSetVariableValue((String) rule.getValue().value, this)) {
             return false;
           }
         }
+        break;
       }
     }
 
